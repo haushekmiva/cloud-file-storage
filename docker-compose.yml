@@ -1,0 +1,15 @@
+services:              # список всех сервисов
+  postgres:            # имя сервиса (оно же hostname в сети Docker)
+    image: postgres:16 # какой образ использовать (скачается с Docker Hub)
+    ports:
+      - "5432:5432"    # хост:контейнер — пробрасываем порт наружу
+    environment:
+      # переменные окружения внутри контейнера
+        POSTGRES_USER: ${POSTGRES_USER}
+        POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+        POSTGRES_DB: ${POSTGRES_DB} # имя БД которая создастся автоматически
+    volumes:
+      - postgres_data:/var/lib/postgresql/data  # куда postgres пишет данные внутри контейнера → именованный volume
+
+volumes:
+  postgres_data:       # объявляем именованный volume (Docker сам управляет где он хранится)
