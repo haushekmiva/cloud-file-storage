@@ -1,6 +1,6 @@
-package com.haushekmiva.repository;
+package com.haushekmiva.cloudfilestorage.repository;
 
-import com.haushekmiva.model.User;
+import com.haushekmiva.cloudfilestorage.model.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface UserRepository extends JpaRepository<User, Long> {
