@@ -19,7 +19,7 @@ public class UserServiceImpl implements UserService {
 
     public void register(String username, String password) {
         if (userRepository.existsByUsername(username)) {
-            throw new UserAlreadyExists("User with this username already exists.");
+            throw new UserAlreadyExists("User with this username already exists.", username);
         }
 
         User user = new User();
