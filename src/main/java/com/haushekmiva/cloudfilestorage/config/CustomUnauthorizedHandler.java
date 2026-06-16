@@ -1,6 +1,6 @@
 package com.haushekmiva.cloudfilestorage.config;
 
-import com.haushekmiva.cloudfilestorage.dto.ErrorDto;
+import com.haushekmiva.cloudfilestorage.dto.ErrorResponse;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -28,6 +28,6 @@ public class CustomUnauthorizedHandler implements AuthenticationEntryPoint {
         response.setContentType("application/json");
         response.setCharacterEncoding("UTF-8");
         String message = messageSource.getMessage("error.unauthorized", null, locale);
-        objectMapper.writeValue(response.getWriter(), new ErrorDto(message));
+        objectMapper.writeValue(response.getWriter(), new ErrorResponse(message));
     }
 }
