@@ -7,6 +7,10 @@ import jakarta.validation.constraints.Size;
 public record RegisterRequest(
         @NotBlank @Size(min = 6, max = 20) @Pattern(regexp = "^[a-zA-Z0-9]+$") String username,
         @NotBlank @Size(min = 6, max = BCRYPT_MAX_LENGTH) @Pattern(regexp = "^[\\x20-\\x7E]+$") String password
-) {
+)
+{
+    public RegisterRequest {
+        username = username == null ? null : username.trim();
+    }
     public static final int BCRYPT_MAX_LENGTH = 72;
 }
