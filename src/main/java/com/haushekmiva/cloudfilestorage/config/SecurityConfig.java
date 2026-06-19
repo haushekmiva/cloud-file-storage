@@ -57,14 +57,4 @@ public class SecurityConfig {
             AuthenticationConfiguration config) throws Exception {
         return config.getAuthenticationManager();
     }
-
-    private void handleUnauthorized(HttpServletRequest request,
-                            HttpServletResponse response,
-                            AuthenticationException authException) throws IOException {
-        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-        response.setContentType("application/json");
-        response.setCharacterEncoding("UTF-8");
-        response.getWriter().write("{\"error\": \"Unauthorized\"}");
-    }
-
 }
