@@ -1,9 +1,9 @@
 package com.haushekmiva.cloudfilestorage.service;
 
-import com.haushekmiva.cloudfilestorage.dto.RegisterResponse;
+import com.haushekmiva.cloudfilestorage.dto.AuthResponse;
 
 public interface UserService {
 
-    public RegisterResponse register(String username, String password);
+    public void register(String username, String password);
 
 }
