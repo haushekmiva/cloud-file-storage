@@ -1,12 +1,16 @@
 package com.haushekmiva.cloudfilestorage.dto;
 
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
+import static com.haushekmiva.cloudfilestorage.config.SecurityConfig.PASSWORD_ENCODER_MAX_LENGTH;
+
 public record LoginRequest(
-        @NotBlank @Size(max = 20) String username,
-        @NotBlank @Size(max = BCRYPT_MAX_LENGTH) @Pattern(regexp = "^[\\x20-\\x7E]+$") String password
-) {
-    public static final int BCRYPT_MAX_LENGTH = 72;
-}
+        @NotBlank(message = "{validation.login.username.not-blank}")
+        @Size(max = 20, message = "{validation.login.username.size}")
+        String username,
+
+        @NotBlank(message = "{validation.login.password.not-blank}")
+        @Size(max = PASSWORD_ENCODER_MAX_LENGTH, message = "{validation.login.password.size}")
+        String password
+) {}

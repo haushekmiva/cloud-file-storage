@@ -22,6 +22,8 @@ import org.springframework.security.web.context.SecurityContextRepository;
 @RequiredArgsConstructor
 public class SecurityConfig {
 
+    public static final int PASSWORD_ENCODER_MAX_LENGTH = 72;
+
     private final CustomUnauthorizedHandler customUnauthorizedHandler;
 
     @Bean
