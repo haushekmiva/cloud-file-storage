@@ -25,7 +25,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(UserAlreadyExistsException.class)
     @ResponseStatus(HttpStatus.CONFLICT)
-    public ErrorResponse handleUserAlreadyExists(UserAlreadyExistsException e, Locale locale, HttpServletRequest request) {
+    public ErrorResponse handleUserAlreadyExistsError(UserAlreadyExistsException e, Locale locale, HttpServletRequest request) {
         log.warn("User already exists: username = {}, ip = {}.", e.getUsername(), request.getRemoteAddr());
         String message = messageSource.getMessage("error.user.already-exists", null, locale);
         return new ErrorResponse(message);
@@ -53,7 +53,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
-    public ErrorResponse handleGeneral(Exception e, Locale locale) {
+    public ErrorResponse handleGeneralError(Exception e, Locale locale) {
         log.error("Unknown error occurred.", e);
         String message = messageSource.getMessage("error.internal", null, locale);
         return new ErrorResponse(message);
