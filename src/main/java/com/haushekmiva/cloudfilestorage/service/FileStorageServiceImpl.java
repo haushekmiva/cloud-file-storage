@@ -27,12 +27,12 @@ public class FileStorageServiceImpl implements FileStorageService {
             minioClient.putObject(PutObjectArgs.builder()
                     .bucket(bucket)
                     .object(key)
-                    .stream(data, size, (long) -1)
+                    .stream(data, size, -1L)
                     .contentType(contentType)
                     .build()
             );
         } catch (MinioException e) {
-            throw new FileStorageException("Error occurred while uploading file.", e.getCause());
+            throw new FileStorageException("Error occurred while uploading file.", e);
         }
     }
 
@@ -47,7 +47,7 @@ public class FileStorageServiceImpl implements FileStorageService {
             );
 
         } catch (MinioException e) {
-            throw new FileStorageException("Error occurred while downloading file", e.getCause());
+            throw new FileStorageException("Error occurred while downloading file", e);
         }
     }
 
@@ -61,7 +61,7 @@ public class FileStorageServiceImpl implements FileStorageService {
                             .build()
             );
         } catch (MinioException e) {
-            throw new FileStorageException("Error occurred while removing file", e.getCause());
+            throw new FileStorageException("Error occurred while removing file", e);
         }
     }
 }
