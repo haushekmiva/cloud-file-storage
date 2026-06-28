@@ -1,10 +1,8 @@
 package com.haushekmiva.cloudfilestorage.service;
 
 import com.haushekmiva.cloudfilestorage.exception.FileStorageException;
-import io.minio.GetObjectArgs;
-import io.minio.MinioClient;
-import io.minio.PutObjectArgs;
-import io.minio.RemoveObjectArgs;
+import io.minio.*;
+import io.minio.errors.ErrorResponseException;
 import io.minio.errors.MinioException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -62,6 +60,27 @@ public class FileStorageServiceImpl implements FileStorageService {
             );
         } catch (MinioException e) {
             throw new FileStorageException("Error occurred while removing file", e);
+        }
+    }
+
+    @Override
+    public boolean isExists(String key) {
+        try {
+            minioClient.statObject(
+                    StatObjectArgs.builder()
+                            .bucket(bucket)
+                            .object(key)
+                            .build()
+            );
+            return true;
+        } catch (ErrorResponseException e) {
+            if (e.errorResponse().code().equals("NoSuchKey")) {
+                return false;
+            } else {
+                throw new FileStorageException("Unknown file storage error occurred.", e);
+            }
+        } catch (MinioException e) {
+            throw new FileStorageException("Unknown file storage error occurred.", e);
         }
     }
 }
