@@ -1,3 +1,4 @@
 package com.haushekmiva.cloudfilestorage.dto;
 
-public record ValidationError(String field, String message) {}
+public record ValidationError(String field, String message) {
+}

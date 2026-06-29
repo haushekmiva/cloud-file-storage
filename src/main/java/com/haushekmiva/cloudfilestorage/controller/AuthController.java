@@ -1,9 +1,9 @@
 package com.haushekmiva.cloudfilestorage.controller;
 
 
+import com.haushekmiva.cloudfilestorage.dto.AuthResponse;
 import com.haushekmiva.cloudfilestorage.dto.LoginRequest;
 import com.haushekmiva.cloudfilestorage.dto.RegisterRequest;
-import com.haushekmiva.cloudfilestorage.dto.AuthResponse;
 import com.haushekmiva.cloudfilestorage.service.AuthService;
 import com.haushekmiva.cloudfilestorage.service.UserService;
 import jakarta.servlet.http.HttpServletRequest;

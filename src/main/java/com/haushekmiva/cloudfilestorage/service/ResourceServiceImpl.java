@@ -5,8 +5,6 @@ import com.haushekmiva.cloudfilestorage.dto.ResourceType;
 import com.haushekmiva.cloudfilestorage.exception.FileStorageException;
 import com.haushekmiva.cloudfilestorage.exception.InvalidPathException;
 import com.haushekmiva.cloudfilestorage.exception.ResourceAlreadyExistsException;
-import io.minio.Result;
-import io.minio.messages.Item;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -25,14 +23,13 @@ import java.util.zip.ZipOutputStream;
 @Slf4j
 public class ResourceServiceImpl implements ResourceService {
 
-    private final FileStorageService fileStorageService;
     private static final int MAX_PATH_LENGTH = 1024;
     private static final String VALID_PATH_REGEX = "^(?!/)(?!.*//)(?!.*(?:^|/)\\.+(?:/|$))\\S+$";
-
+    private final FileStorageService fileStorageService;
 
     // TODO: добавить макс размер файла
     @Override
-    public List<ResourceInfoResponse> upload(List<MultipartFile> files, String path, Long userId){
+    public List<ResourceInfoResponse> upload(List<MultipartFile> files, String path, Long userId) {
 
         if (!isPathValid(path) && !path.isEmpty()) {
             throw new InvalidPathException(path);
@@ -96,7 +93,7 @@ public class ResourceServiceImpl implements ResourceService {
 
     private void downloadFile(String path, OutputStream outputStream) throws IOException {
         try (InputStream is = fileStorageService.download(path)) {
-        is.transferTo(outputStream);
+            is.transferTo(outputStream);
         }
     }
 
@@ -130,12 +127,13 @@ public class ResourceServiceImpl implements ResourceService {
         return new PathPartsDto(name, path);
     }
 
+    private boolean isPathValid(String path) {
+        return path.length() < MAX_PATH_LENGTH && path.matches(VALID_PATH_REGEX);
+    }
+
     private record PathPartsDto(
             String fileName,
             String filePath
-    ) {}
-
-    private boolean isPathValid(String path) {
-        return path.length() < MAX_PATH_LENGTH && path.matches(VALID_PATH_REGEX);
+    ) {
     }
 }

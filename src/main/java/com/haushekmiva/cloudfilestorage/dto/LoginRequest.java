@@ -13,4 +13,5 @@ public record LoginRequest(
         @NotBlank(message = "{validation.login.password.not-blank}")
         @Size(max = PASSWORD_ENCODER_MAX_LENGTH, message = "{validation.login.password.size}")
         String password
-) {}
+) {
+}
