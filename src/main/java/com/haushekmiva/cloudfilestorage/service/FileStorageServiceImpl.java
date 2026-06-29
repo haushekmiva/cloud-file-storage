@@ -4,11 +4,14 @@ import com.haushekmiva.cloudfilestorage.exception.FileStorageException;
 import io.minio.*;
 import io.minio.errors.ErrorResponseException;
 import io.minio.errors.MinioException;
+import io.minio.messages.Item;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -83,4 +86,28 @@ public class FileStorageServiceImpl implements FileStorageService {
             throw new FileStorageException("Unknown file storage error occurred.", e);
         }
     }
+
+    @Override
+    public List<String> getDirectoryContent(String prefix) {
+        Iterable<Result<Item>> results = minioClient.listObjects(
+                ListObjectsArgs.builder()
+                        .bucket(bucket)
+                        .prefix(prefix)
+                        .recursive(true)
+                        .build()
+        );
+
+        List<String> objectNames = new ArrayList<>();
+
+        try {
+            for (Result<Item> result : results) {
+                Item item = result.get();
+                objectNames.add(item.objectName());
+            }
+        } catch (MinioException e) {
+            throw new FileStorageException("Error occurred while getting object names", e);
+        }
+        return objectNames;
+    }
+
 }

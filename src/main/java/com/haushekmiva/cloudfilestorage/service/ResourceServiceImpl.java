@@ -5,6 +5,8 @@ import com.haushekmiva.cloudfilestorage.dto.ResourceType;
 import com.haushekmiva.cloudfilestorage.exception.FileStorageException;
 import com.haushekmiva.cloudfilestorage.exception.InvalidPathException;
 import com.haushekmiva.cloudfilestorage.exception.ResourceAlreadyExistsException;
+import io.minio.Result;
+import io.minio.messages.Item;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -12,8 +14,11 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 @Service
 @RequiredArgsConstructor
@@ -65,14 +70,51 @@ public class ResourceServiceImpl implements ResourceService {
     }
 
     @Override
-    public InputStream download(String path, Long userId) {
-        return null;
+    public void download(String path, Long userId, OutputStream outputStream) {
+        if (!isPathValid(path)) {
+            throw new InvalidPathException(path);
+        }
+
+        String userPath = getUserPath(path, userId);
+
+        try {
+            if (path.charAt(path.length() - 1) == '/') {
+                downloadDirectory(userPath, outputStream);
+            } else {
+                downloadFile(userPath, outputStream);
+            }
+            log.info("Resource served: path={}", userPath);
+        } catch (IOException e) {
+            throw new FileStorageException("Error occurred while downloading file %s".formatted(userPath), e);
+        }
     }
 
     @Override
     public void delete(String path, Long userId) {
 
     }
+
+    private void downloadFile(String path, OutputStream outputStream) throws IOException {
+        try (InputStream is = fileStorageService.download(path)) {
+        is.transferTo(outputStream);
+        }
+    }
+
+    private void downloadDirectory(String path, OutputStream outputStream) throws IOException {
+        List<String> filesPath = fileStorageService.getDirectoryContent(path);
+
+        try (ZipOutputStream zos = new ZipOutputStream(outputStream)) {
+
+            for (String filePath : filesPath) {
+                zos.putNextEntry(new ZipEntry(filePath.substring(path.length())));
+                try (InputStream is = fileStorageService.download(filePath)) {
+                    is.transferTo(zos);
+                }
+                zos.closeEntry();
+            }
+        }
+    }
+
 
     private String getUserPath(String path, Long userId) {
         return "user-" + userId + "-files/" + path;
