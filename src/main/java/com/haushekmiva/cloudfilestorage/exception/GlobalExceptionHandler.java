@@ -2,6 +2,7 @@ package com.haushekmiva.cloudfilestorage.exception;
 
 import com.haushekmiva.cloudfilestorage.dto.ErrorResponse;
 import com.haushekmiva.cloudfilestorage.dto.ValidationError;
+import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -25,15 +26,23 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(UserAlreadyExistsException.class)
     @ResponseStatus(HttpStatus.CONFLICT)
-    public ErrorResponse handleUserAlreadyExistsError(UserAlreadyExistsException e, Locale locale, HttpServletRequest request) {
+    public ErrorResponse handleUserAlreadyExistsException(UserAlreadyExistsException e, Locale locale, HttpServletRequest request) {
         log.warn("User already exists: username = {}, ip = {}.", e.getUsername(), request.getRemoteAddr());
         String message = messageSource.getMessage("error.user.already-exists", null, locale);
         return new ErrorResponse(message);
     }
 
+    @ExceptionHandler(ResourceAlreadyExistsException.class)
+    @ResponseStatus(HttpStatus.CONFLICT)
+    public ErrorResponse handleResourceAlreadyExistsException(ResourceAlreadyExistsException e, Locale locale) {
+        String message = messageSource.getMessage("error.resource.already-exists", null, locale);
+        log.debug("Resource already exists: path = {}", e.getPath());
+        return new ErrorResponse(message);
+    }
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public ErrorResponse handleValidationError(MethodArgumentNotValidException e, Locale locale) {
+    public ErrorResponse handleValidationException(MethodArgumentNotValidException e, Locale locale) {
         List<ValidationError> errors = e.getBindingResult()
                 .getFieldErrors()
                 .stream()
@@ -43,17 +52,25 @@ public class GlobalExceptionHandler {
         return new ErrorResponse(message, errors);
     }
 
+    @ExceptionHandler(InvalidPathException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ErrorResponse handleInvalidPathException(InvalidPathException e, Locale locale) {
+        String message = messageSource.getMessage("error.invalid-path", null, locale);
+        log.debug("Invalid path: path = {}", e.getPath());
+        return new ErrorResponse(message);
+    }
+
     @ExceptionHandler(UserAuthenticationException.class)
     @ResponseStatus(HttpStatus.UNAUTHORIZED)
-    public ErrorResponse handleAuthenticationError(UserAuthenticationException e, Locale locale) {
+    public ErrorResponse handleAuthenticationException(UserAuthenticationException e, Locale locale) {
         log.warn("Authentication error: {}", e.getMessage());
         String message = messageSource.getMessage("error.authentication", null, locale);
         return new ErrorResponse(message);
     }
 
-    @ExceptionHandler(Exception.class)
+    @ExceptionHandler({FileStorageException.class, Exception.class})
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
-    public ErrorResponse handleGeneralError(Exception e, Locale locale) {
+    public ErrorResponse handleGeneralException(Exception e, Locale locale) {
         log.error("Unknown error occurred.", e);
         String message = messageSource.getMessage("error.internal", null, locale);
         return new ErrorResponse(message);
