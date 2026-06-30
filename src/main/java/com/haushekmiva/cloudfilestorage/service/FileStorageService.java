@@ -9,7 +9,7 @@ public interface FileStorageService {
 
     InputStream download(String key);
 
-    void delete(String key);
+    void deleteObject(String key);
 
     boolean isExists(String key);
 

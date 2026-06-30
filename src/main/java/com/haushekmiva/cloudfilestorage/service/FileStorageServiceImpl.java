@@ -54,7 +54,7 @@ public class FileStorageServiceImpl implements FileStorageService {
     }
 
     @Override
-    public void delete(String key) {
+    public void deleteObject(String key) {
         try {
             minioClient.removeObject(
                     RemoveObjectArgs.builder()
