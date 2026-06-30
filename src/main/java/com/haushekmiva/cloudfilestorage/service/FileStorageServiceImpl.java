@@ -1,10 +1,11 @@
 package com.haushekmiva.cloudfilestorage.service;
 
 import com.haushekmiva.cloudfilestorage.exception.FileStorageException;
-import com.haushekmiva.cloudfilestorage.exception.ResourceNotFoundException;
 import io.minio.*;
 import io.minio.errors.ErrorResponseException;
 import io.minio.errors.MinioException;
+import io.minio.messages.DeleteRequest;
+import io.minio.messages.DeleteResult;
 import io.minio.messages.Item;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -62,8 +63,44 @@ public class FileStorageServiceImpl implements FileStorageService {
                             .object(key)
                             .build()
             );
+        } catch (MinioException e) {
+            throw new FileStorageException("Unknown file storage error occurred.", e);
         }
-        catch (MinioException e) {
+    }
+
+    @Override
+    public void deleteObjects(String prefix) {
+        try {
+            Iterable<Result<Item>> results = minioClient.listObjects(
+                    ListObjectsArgs.builder()
+                            .bucket(bucket)
+                            .prefix(prefix)
+                            .recursive(true)
+                            .build()
+            );
+
+            List<DeleteRequest.Object> objectsToDelete = new ArrayList<>();
+            for (Result<Item> result : results) {
+                Item item = result.get();
+                objectsToDelete.add(new DeleteRequest.Object(item.objectName()));
+            }
+
+            if (objectsToDelete.isEmpty()) {
+                return;
+            }
+
+            Iterable<Result<DeleteResult.Error>> errorResults = minioClient.removeObjects(
+                    RemoveObjectsArgs.builder()
+                            .bucket(bucket)
+                            .objects(objectsToDelete)
+                            .build()
+            );
+
+            for (Result<DeleteResult.Error> errorResult : errorResults) {
+                errorResult.get();
+            }
+
+        } catch (Exception e) {
             throw new FileStorageException("Unknown file storage error occurred.", e);
         }
     }

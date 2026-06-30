@@ -11,6 +11,8 @@ public interface FileStorageService {
 
     void deleteObject(String key);
 
+    void deleteObjects(String prefix);
+
     boolean isExists(String key);
 
     List<String> getDirectoryContent(String prefix);

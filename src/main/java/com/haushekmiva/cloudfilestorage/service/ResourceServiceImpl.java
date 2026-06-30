@@ -5,6 +5,7 @@ import com.haushekmiva.cloudfilestorage.dto.ResourceType;
 import com.haushekmiva.cloudfilestorage.exception.FileStorageException;
 import com.haushekmiva.cloudfilestorage.exception.InvalidPathException;
 import com.haushekmiva.cloudfilestorage.exception.ResourceAlreadyExistsException;
+import com.haushekmiva.cloudfilestorage.exception.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -74,8 +75,12 @@ public class ResourceServiceImpl implements ResourceService {
 
         String userPath = getUserPath(path, userId);
 
+        if (!fileStorageService.isExists(userPath)) {
+            throw new ResourceNotFoundException(userPath);
+        }
+
         try {
-            if (path.charAt(path.length() - 1) == '/') {
+            if (path.endsWith("/")) {
                 downloadDirectory(userPath, outputStream);
             } else {
                 downloadFile(userPath, outputStream);
@@ -88,6 +93,22 @@ public class ResourceServiceImpl implements ResourceService {
 
     @Override
     public void delete(String path, Long userId) {
+
+        if (!isPathValid(path)) {
+            throw new InvalidPathException(path);
+        }
+
+        String userPath = getUserPath(path, userId);
+
+        if (!fileStorageService.isExists(userPath)) {
+            throw new ResourceNotFoundException(path);
+        }
+
+        if (path.endsWith("/")) {
+            fileStorageService.deleteObjects(userPath);
+        } else {
+            fileStorageService.deleteObject(userPath);
+        }
 
     }
 

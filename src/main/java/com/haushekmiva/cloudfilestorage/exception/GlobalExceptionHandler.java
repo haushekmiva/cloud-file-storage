@@ -68,6 +68,14 @@ public class GlobalExceptionHandler {
         return new ErrorResponse(message);
     }
 
+    @ExceptionHandler(ResourceNotFoundException.class)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public ErrorResponse handleResourceNotFoundException(ResourceNotFoundException e, Locale locale) {
+        log.debug("Resource not found: path = {}", e.getPath());
+        String message = messageSource.getMessage("error.resource.not-found", null, locale);
+        return new ErrorResponse(message);
+    }
+
     @ExceptionHandler({FileStorageException.class, Exception.class})
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     public ErrorResponse handleGeneralException(Exception e, Locale locale) {
