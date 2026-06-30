@@ -1,6 +1,7 @@
 package com.haushekmiva.cloudfilestorage.service;
 
 import com.haushekmiva.cloudfilestorage.exception.FileStorageException;
+import com.haushekmiva.cloudfilestorage.exception.ResourceNotFoundException;
 import io.minio.*;
 import io.minio.errors.ErrorResponseException;
 import io.minio.errors.MinioException;
@@ -61,8 +62,9 @@ public class FileStorageServiceImpl implements FileStorageService {
                             .object(key)
                             .build()
             );
-        } catch (MinioException e) {
-            throw new FileStorageException("Error occurred while removing file", e);
+        }
+        catch (MinioException e) {
+            throw new FileStorageException("Unknown file storage error occurred.", e);
         }
     }
 
@@ -79,9 +81,8 @@ public class FileStorageServiceImpl implements FileStorageService {
         } catch (ErrorResponseException e) {
             if (e.errorResponse().code().equals("NoSuchKey")) {
                 return false;
-            } else {
-                throw new FileStorageException("Unknown file storage error occurred.", e);
             }
+            throw new FileStorageException("Unknown file storage error occurred.", e);
         } catch (MinioException e) {
             throw new FileStorageException("Unknown file storage error occurred.", e);
         }
