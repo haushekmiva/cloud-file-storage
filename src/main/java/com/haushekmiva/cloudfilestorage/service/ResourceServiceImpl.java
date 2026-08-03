@@ -112,6 +112,37 @@ public class ResourceServiceImpl implements ResourceService {
 
     }
 
+    @Override
+    public ResourceInfoResponse getResourceInfo(String path, Long userId) {
+        if (!isPathValid(path)) {
+            throw new InvalidPathException(path);
+        }
+
+        String userPath = getUserPath(path, userId);
+        PathPartsDto pathParts = splitPath(path);
+
+
+        if (path.endsWith("/")) {
+
+            List<String> directoryContent = fileStorageService.getDirectoryContent(userPath);
+
+            if (directoryContent.isEmpty()) {
+                throw new ResourceNotFoundException(path);
+            }
+
+            return new ResourceInfoResponse(pathParts.filePath(), pathParts.fileName(), ResourceType.DIRECTORY);
+        } else {
+
+            if (!fileStorageService.isExists(userPath)) {
+                throw new ResourceNotFoundException(path);
+            }
+
+            return new ResourceInfoResponse(pathParts.filePath(),
+                    pathParts.fileName, ResourceType.FILE, fileStorageService.getObjectSize(userPath));
+        }
+
+    }
+
     private void downloadFile(String path, OutputStream outputStream) throws IOException {
         try (InputStream is = fileStorageService.download(path)) {
             is.transferTo(outputStream);
@@ -139,12 +170,16 @@ public class ResourceServiceImpl implements ResourceService {
     }
 
     private PathPartsDto splitPath(String fullPath) {
-        int lastSlash = fullPath.lastIndexOf('/');
+        boolean isDirectory = fullPath.endsWith("/");
+        String trimmed = isDirectory ? fullPath.substring(0, fullPath.length() - 1) : fullPath;
+
+        int lastSlash = trimmed.lastIndexOf('/');
         if (lastSlash == -1) {
-            return new PathPartsDto("", fullPath);
+            return new PathPartsDto(fullPath, "");
         }
-        String path = fullPath.substring(0, lastSlash + 1);
-        String name = fullPath.substring(lastSlash + 1);
+
+        String path = trimmed.substring(0, lastSlash + 1);
+        String name = trimmed.substring(lastSlash + 1) + (isDirectory ? "/" : "");
         return new PathPartsDto(name, path);
     }
 

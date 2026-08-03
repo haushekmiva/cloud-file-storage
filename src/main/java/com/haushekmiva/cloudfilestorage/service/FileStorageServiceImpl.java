@@ -126,6 +126,22 @@ public class FileStorageServiceImpl implements FileStorageService {
     }
 
     @Override
+    public Long getObjectSize(String key) {
+        try {
+            StatObjectResponse stat = minioClient.statObject(
+                    StatObjectArgs.builder()
+                            .bucket(bucket)
+                            .object(key)
+                            .build()
+            );
+            return stat.size();
+
+        }  catch (MinioException e) {
+            throw new FileStorageException("Unknown file storage error occurred.", e);
+        }
+    }
+
+    @Override
     public List<String> getDirectoryContent(String prefix) {
         Iterable<Result<Item>> results = minioClient.listObjects(
                 ListObjectsArgs.builder()

@@ -15,5 +15,9 @@ public interface FileStorageService {
 
     boolean isExists(String key);
 
+    Long getObjectSize(String key);
+
     List<String> getDirectoryContent(String prefix);
+
+
 }
