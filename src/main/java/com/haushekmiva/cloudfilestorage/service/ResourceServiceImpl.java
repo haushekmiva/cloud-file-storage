@@ -59,7 +59,7 @@ public class ResourceServiceImpl implements ResourceService {
                 fileStorageService.upload(inputStream, userPath, size, contentType);
                 log.info("Successful file upload: path={}, userId={}", userPath, userId);
                 PathPartsDto parts = splitPath(path + file.getOriginalFilename());
-                response.add(new ResourceInfoResponse(parts.filePath(), parts.fileName(), ResourceType.FILE, size));
+                response.add(new ResourceInfoResponse(parts.resourcePath(), parts.resourceName(), ResourceType.FILE, size));
             } catch (IOException e) {
                 throw new FileStorageException("Error occurred while uploading file (%s).".formatted(userPath), e);
             }
@@ -130,15 +130,15 @@ public class ResourceServiceImpl implements ResourceService {
                 throw new ResourceNotFoundException(userPath);
             }
 
-            return new ResourceInfoResponse(pathParts.filePath(), pathParts.fileName(), ResourceType.DIRECTORY);
+            return new ResourceInfoResponse(pathParts.resourcePath(), pathParts.resourceName(), ResourceType.DIRECTORY);
         } else {
 
             if (!fileStorageService.isExists(userPath)) {
                 throw new ResourceNotFoundException(userPath);
             }
 
-            return new ResourceInfoResponse(pathParts.filePath(),
-                    pathParts.fileName, ResourceType.FILE, fileStorageService.getObjectSize(userPath));
+            return new ResourceInfoResponse(pathParts.resourcePath(),
+                    pathParts.resourceName, ResourceType.FILE, fileStorageService.getObjectSize(userPath));
         }
 
     }
@@ -155,11 +155,9 @@ public class ResourceServiceImpl implements ResourceService {
 
         List<String> directoryContent = fileStorageService.getDirectoryTopLevelContent(userPath);
 
-        if (directoryContent.isEmpty()) {
+        if (!isDirectoryExists(userPath)) {
             throw new ResourceNotFoundException(userPath);
         }
-
-        // добавить проверку на 0-байт объект
 
         List<ResourceInfoResponse> response = new ArrayList<>();
 
@@ -168,15 +166,40 @@ public class ResourceServiceImpl implements ResourceService {
             PathPartsDto pathParts = splitPath(removeUserPrefix(resource));
 
             if (resource.endsWith("/")) {
-                response.add(new ResourceInfoResponse(pathParts.filePath(), pathParts.fileName(), ResourceType.DIRECTORY));
+                response.add(new ResourceInfoResponse(pathParts.resourcePath(), pathParts.resourceName(), ResourceType.DIRECTORY));
             } else {
-                response.add(new ResourceInfoResponse(pathParts.filePath(), pathParts.fileName(), ResourceType.FILE,
+                response.add(new ResourceInfoResponse(pathParts.resourcePath(), pathParts.resourceName(), ResourceType.FILE,
                         fileStorageService.getObjectSize(resource)));
             }
 
         }
         return response;
     }
+
+    @Override
+    public ResourceInfoResponse createEmptyDirectory(String newDirectoryPath, Long userId) {
+
+        String userPath = getUserPath(newDirectoryPath, userId);
+
+        if (!newDirectoryPath.endsWith("/") && !isPathValid(newDirectoryPath)) {
+            throw new InvalidPathException(newDirectoryPath);
+        }
+
+        PathPartsDto pathParts = splitPath(newDirectoryPath);
+
+        if (isDirectoryExists(getUserPath(pathParts.resourcePath(), userId))) {
+            throw new ResourceNotFoundException(userPath);
+        }
+
+        if (isDirectoryExists(newDirectoryPath)) {
+            throw new ResourceAlreadyExistsException(newDirectoryPath);
+        }
+
+        fileStorageService.createEmptyMarker(newDirectoryPath);
+
+        return new ResourceInfoResponse(pathParts.resourcePath(), pathParts.resourceName(), ResourceType.DIRECTORY);
+    }
+
 
     private void downloadFile(String path, OutputStream outputStream) throws IOException {
         try (InputStream is = fileStorageService.download(path)) {
@@ -198,7 +221,6 @@ public class ResourceServiceImpl implements ResourceService {
             }
         }
     }
-
 
     private String getUserPath(String path, Long userId) {
         return "user-" + userId + "-files/" + path;
@@ -227,9 +249,13 @@ public class ResourceServiceImpl implements ResourceService {
         return path.length() < MAX_PATH_LENGTH && path.matches(VALID_PATH_REGEX);
     }
 
+    private boolean isDirectoryExists(String path) {
+        return fileStorageService.isExists(path) || !fileStorageService.getDirectoryTopLevelContent(path).isEmpty();
+    }
+
     private record PathPartsDto(
-            String fileName,
-            String filePath
+            String resourceName,
+            String resourcePath
     ) {
     }
 }

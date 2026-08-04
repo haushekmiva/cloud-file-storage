@@ -20,4 +20,6 @@ public interface FileStorageService {
     List<String> getDirectoryContent(String prefix);
 
     List<String> getDirectoryTopLevelContent(String prefix);
+
+    void createEmptyMarker(String key);
 }

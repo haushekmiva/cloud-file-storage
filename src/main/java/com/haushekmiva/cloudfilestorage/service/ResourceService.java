@@ -17,4 +17,6 @@ public interface ResourceService {
     ResourceInfoResponse getResourceInfo(String path, Long userId);
 
     List<ResourceInfoResponse> getDirectoryContentInfo(String path, Long userId);
+
+    ResourceInfoResponse createEmptyDirectory(String newDirectoryPath, Long userId);
 }

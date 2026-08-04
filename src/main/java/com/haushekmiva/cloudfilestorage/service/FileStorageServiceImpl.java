@@ -151,6 +151,11 @@ public class FileStorageServiceImpl implements FileStorageService {
         return listObjectsByPrefix(prefix, false);
     }
 
+    @Override
+    public void createEmptyMarker(String key) {
+        upload(InputStream.nullInputStream(), key, 0, "application/octet-stream");
+    }
+
     private List<String> listObjectsByPrefix(String prefix, boolean recursive) {
         Iterable<Result<Item>> results = minioClient.listObjects(
                 ListObjectsArgs.builder()
