@@ -143,11 +143,20 @@ public class FileStorageServiceImpl implements FileStorageService {
 
     @Override
     public List<String> getDirectoryContent(String prefix) {
+        return listObjectsByPrefix(prefix, true);
+    }
+
+    @Override
+    public List<String> getDirectoryTopLevelContent(String prefix) {
+        return listObjectsByPrefix(prefix, false);
+    }
+
+    private List<String> listObjectsByPrefix(String prefix, boolean recursive) {
         Iterable<Result<Item>> results = minioClient.listObjects(
                 ListObjectsArgs.builder()
                         .bucket(bucket)
                         .prefix(prefix)
-                        .recursive(true)
+                        .recursive(recursive)
                         .build()
         );
 

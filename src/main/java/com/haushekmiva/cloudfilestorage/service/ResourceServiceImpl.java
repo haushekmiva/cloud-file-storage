@@ -127,20 +127,55 @@ public class ResourceServiceImpl implements ResourceService {
             List<String> directoryContent = fileStorageService.getDirectoryContent(userPath);
 
             if (directoryContent.isEmpty()) {
-                throw new ResourceNotFoundException(path);
+                throw new ResourceNotFoundException(userPath);
             }
 
             return new ResourceInfoResponse(pathParts.filePath(), pathParts.fileName(), ResourceType.DIRECTORY);
         } else {
 
             if (!fileStorageService.isExists(userPath)) {
-                throw new ResourceNotFoundException(path);
+                throw new ResourceNotFoundException(userPath);
             }
 
             return new ResourceInfoResponse(pathParts.filePath(),
                     pathParts.fileName, ResourceType.FILE, fileStorageService.getObjectSize(userPath));
         }
 
+    }
+
+    @Override
+    public List<ResourceInfoResponse> getDirectoryContentInfo(String path, Long userId) {
+
+        if (!isPathValid(path)) {
+            throw new InvalidPathException(path);
+        }
+
+
+        String userPath = getUserPath(path, userId);
+
+        List<String> directoryContent = fileStorageService.getDirectoryTopLevelContent(userPath);
+
+        if (directoryContent.isEmpty()) {
+            throw new ResourceNotFoundException(userPath);
+        }
+
+        // добавить проверку на 0-байт объект
+
+        List<ResourceInfoResponse> response = new ArrayList<>();
+
+        for (String resource : directoryContent) {
+
+            PathPartsDto pathParts = splitPath(removeUserPrefix(resource));
+
+            if (resource.endsWith("/")) {
+                response.add(new ResourceInfoResponse(pathParts.filePath(), pathParts.fileName(), ResourceType.DIRECTORY));
+            } else {
+                response.add(new ResourceInfoResponse(pathParts.filePath(), pathParts.fileName(), ResourceType.FILE,
+                        fileStorageService.getObjectSize(resource)));
+            }
+
+        }
+        return response;
     }
 
     private void downloadFile(String path, OutputStream outputStream) throws IOException {
@@ -181,6 +216,11 @@ public class ResourceServiceImpl implements ResourceService {
         String path = trimmed.substring(0, lastSlash + 1);
         String name = trimmed.substring(lastSlash + 1) + (isDirectory ? "/" : "");
         return new PathPartsDto(name, path);
+    }
+
+    private String removeUserPrefix(String userPath) {
+        int firstSlash = userPath.indexOf('/');
+        return userPath.substring(firstSlash + 1);
     }
 
     private boolean isPathValid(String path) {

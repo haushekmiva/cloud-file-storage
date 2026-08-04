@@ -15,4 +15,6 @@ public interface ResourceService {
     void delete(String path, Long userId);
 
     ResourceInfoResponse getResourceInfo(String path, Long userId);
+
+    List<ResourceInfoResponse> getDirectoryContentInfo(String path, Long userId);
 }
