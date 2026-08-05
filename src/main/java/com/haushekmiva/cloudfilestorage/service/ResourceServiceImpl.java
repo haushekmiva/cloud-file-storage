@@ -8,6 +8,7 @@ import com.haushekmiva.cloudfilestorage.exception.ResourceAlreadyExistsException
 import com.haushekmiva.cloudfilestorage.exception.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.convert.DtoInstantiatingConverter;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -181,25 +182,24 @@ public class ResourceServiceImpl implements ResourceService {
 
         String userPath = getUserPath(newDirectoryPath, userId);
 
-        if (!newDirectoryPath.endsWith("/") && !isPathValid(newDirectoryPath)) {
+        if (!newDirectoryPath.endsWith("/") || !isPathValid(newDirectoryPath)) {
             throw new InvalidPathException(newDirectoryPath);
         }
 
         PathPartsDto pathParts = splitPath(newDirectoryPath);
 
-        if (isDirectoryExists(getUserPath(pathParts.resourcePath(), userId))) {
+        if (!isDirectoryExists(getUserPath(pathParts.resourcePath(), userId))) {
             throw new ResourceNotFoundException(userPath);
         }
 
         if (isDirectoryExists(newDirectoryPath)) {
-            throw new ResourceAlreadyExistsException(newDirectoryPath);
+            throw new ResourceAlreadyExistsException(userPath);
         }
 
-        fileStorageService.createEmptyMarker(newDirectoryPath);
+        fileStorageService.createEmptyMarker(userPath);
 
         return new ResourceInfoResponse(pathParts.resourcePath(), pathParts.resourceName(), ResourceType.DIRECTORY);
     }
-
 
     private void downloadFile(String path, OutputStream outputStream) throws IOException {
         try (InputStream is = fileStorageService.download(path)) {
