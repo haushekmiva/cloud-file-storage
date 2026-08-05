@@ -8,7 +8,6 @@ import com.haushekmiva.cloudfilestorage.exception.ResourceAlreadyExistsException
 import com.haushekmiva.cloudfilestorage.exception.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.convert.DtoInstantiatingConverter;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -199,6 +198,79 @@ public class ResourceServiceImpl implements ResourceService {
         fileStorageService.createEmptyMarker(userPath);
 
         return new ResourceInfoResponse(pathParts.resourcePath(), pathParts.resourceName(), ResourceType.DIRECTORY);
+    }
+
+    @Override
+    public ResourceInfoResponse moveResource(String oldPath, String newPath, Long userId) {
+
+        if (!isPathValid(oldPath)) {
+            throw new InvalidPathException(oldPath);
+        }
+
+        if (!isPathValid(newPath)) {
+            throw new InvalidPathException(newPath);
+        }
+
+        if (oldPath.endsWith("/") != newPath.endsWith("/")) {
+            throw new InvalidPathException(oldPath);
+        }
+
+        PathPartsDto oldPathParts = splitPath(oldPath);
+        PathPartsDto newPathParts = splitPath(newPath);
+
+        String userOldPath = getUserPath(oldPath, userId);
+        String userNewPath = getUserPath(newPath, userId);
+
+        if (oldPath.equals(newPath)) {
+            if (oldPath.endsWith("/")) {
+                return new ResourceInfoResponse(oldPathParts.resourcePath(), oldPathParts.resourceName(),
+                        ResourceType.DIRECTORY);
+            } else {
+                return new ResourceInfoResponse(oldPathParts.resourcePath(), oldPathParts.resourceName(),
+                        ResourceType.FILE, fileStorageService.getObjectSize(userOldPath));
+            }
+        }
+
+        if (!oldPathParts.resourcePath().equals(newPathParts.resourcePath()) &&
+                !oldPathParts.resourceName().equals(newPathParts.resourceName())) {
+            throw new InvalidPathException(newPath);
+        }
+
+        if (oldPath.endsWith("/")) {
+
+            if (!isDirectoryExists(userOldPath)) {
+                throw new ResourceNotFoundException(userOldPath);
+            }
+
+            if (isDirectoryExists(userNewPath)) {
+                throw new ResourceAlreadyExistsException(userNewPath);
+            }
+
+            List<String> directoryContent = fileStorageService.getDirectoryContent(userOldPath);
+
+            for (String resource : directoryContent) {
+                String suffix = resource.substring(userOldPath.length());
+                fileStorageService.copyObject(resource, userNewPath + suffix);
+                fileStorageService.deleteObject(resource);
+            }
+
+            return new ResourceInfoResponse(newPathParts.resourcePath(), newPathParts.resourceName(), ResourceType.DIRECTORY);
+
+        } else {
+
+            if (!fileStorageService.isExists(userOldPath)) {
+                throw new ResourceNotFoundException(userOldPath);
+            }
+
+            if (fileStorageService.isExists(userNewPath)) {
+                throw new ResourceAlreadyExistsException(userNewPath);
+            }
+
+            fileStorageService.copyObject(userOldPath, userNewPath);
+            fileStorageService.deleteObject(userOldPath);
+            return new ResourceInfoResponse(newPathParts.resourcePath(), newPathParts.resourceName(), ResourceType.FILE,
+                    fileStorageService.getObjectSize(userNewPath));
+        }
     }
 
     private void downloadFile(String path, OutputStream outputStream) throws IOException {

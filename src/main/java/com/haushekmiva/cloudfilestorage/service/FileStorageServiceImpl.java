@@ -156,6 +156,24 @@ public class FileStorageServiceImpl implements FileStorageService {
         upload(InputStream.nullInputStream(), key, 0, "application/octet-stream");
     }
 
+    @Override
+    public void copyObject(String key, String copyKey) {
+        try {
+            minioClient.copyObject(
+                    CopyObjectArgs.builder()
+                            .bucket(bucket)
+                            .object(copyKey)
+                            .source(SourceObject.builder()
+                                    .bucket(bucket)
+                                    .object(key)
+                                    .build())
+                            .build()
+            );
+        } catch (MinioException e) {
+            throw new FileStorageException("Unknown file storage error occurred.", e);
+        }
+    }
+
     private List<String> listObjectsByPrefix(String prefix, boolean recursive) {
         Iterable<Result<Item>> results = minioClient.listObjects(
                 ListObjectsArgs.builder()

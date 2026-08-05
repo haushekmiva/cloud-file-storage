@@ -22,4 +22,6 @@ public interface FileStorageService {
     List<String> getDirectoryTopLevelContent(String prefix);
 
     void createEmptyMarker(String key);
+
+    void copyObject(String key, String copyKey);
 }
