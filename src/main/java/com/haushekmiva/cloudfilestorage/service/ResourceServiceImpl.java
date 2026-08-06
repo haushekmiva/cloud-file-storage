@@ -138,7 +138,7 @@ public class ResourceServiceImpl implements ResourceService {
             }
 
             return new ResourceInfoResponse(pathParts.resourcePath(),
-                    pathParts.resourceName, ResourceType.FILE, fileStorageService.getObjectSize(userPath));
+                    pathParts.resourceName(), ResourceType.FILE, fileStorageService.getObjectSize(userPath));
         }
 
     }
