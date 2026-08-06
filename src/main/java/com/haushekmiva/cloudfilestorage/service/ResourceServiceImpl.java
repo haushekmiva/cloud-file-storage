@@ -1,5 +1,6 @@
 package com.haushekmiva.cloudfilestorage.service;
 
+import com.haushekmiva.cloudfilestorage.dto.ObjectInfo;
 import com.haushekmiva.cloudfilestorage.dto.ResourceInfoResponse;
 import com.haushekmiva.cloudfilestorage.dto.ResourceType;
 import com.haushekmiva.cloudfilestorage.exception.FileStorageException;
@@ -15,7 +16,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
@@ -271,6 +274,49 @@ public class ResourceServiceImpl implements ResourceService {
             return new ResourceInfoResponse(newPathParts.resourcePath(), newPathParts.resourceName(), ResourceType.FILE,
                     fileStorageService.getObjectSize(userNewPath));
         }
+    }
+
+    @Override
+    public List<ResourceInfoResponse> searchResource(String name, Long userId) {
+        String userPath = getUserPath("", userId);
+        List<ObjectInfo> userResources = fileStorageService.searchObjects(userPath);
+
+        List<ResourceInfoResponse> searchResults = new ArrayList<>();
+        Set<String> addedDirectories = new HashSet<>();
+
+        for (ObjectInfo resource : userResources) {
+            String relativePath = removeUserPrefix(resource.path());
+            String[] parts = relativePath.split("/");
+
+            StringBuilder current = new StringBuilder();
+            for (int i = 0; i < parts.length - 1; i++) {
+                current.append(parts[i]).append("/");
+                String directoryPath = current.toString();
+
+                if (parts[i].contains(name) && addedDirectories.add(directoryPath)) {
+                    PathPartsDto dirParts = splitPath(directoryPath);
+                    searchResults.add(new ResourceInfoResponse(dirParts.resourcePath(), dirParts.resourceName(),
+                            ResourceType.DIRECTORY));
+                }
+            }
+
+            if (resource.path().endsWith("/")) {
+                PathPartsDto dirParts = splitPath(relativePath);
+                if (dirParts.resourceName().contains(name) && addedDirectories.add(relativePath)) {
+                    searchResults.add(new ResourceInfoResponse(dirParts.resourcePath(), dirParts.resourceName(),
+                            ResourceType.DIRECTORY));
+                }
+                continue;
+            }
+
+            String fileName = parts[parts.length - 1];
+            if (fileName.contains(name)) {
+                PathPartsDto fileParts = splitPath(relativePath);
+                searchResults.add(new ResourceInfoResponse(fileParts.resourcePath(), fileParts.resourceName(),
+                        ResourceType.FILE, resource.size()));
+            }
+        }
+        return searchResults;
     }
 
     private void downloadFile(String path, OutputStream outputStream) throws IOException {

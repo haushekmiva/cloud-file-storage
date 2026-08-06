@@ -21,4 +21,6 @@ public interface ResourceService {
     ResourceInfoResponse createEmptyDirectory(String newDirectoryPath, Long userId);
 
     ResourceInfoResponse moveResource(String oldPath, String newPath, Long userId);
+
+    List<ResourceInfoResponse> searchResource(String name, Long userId);
 }

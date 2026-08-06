@@ -1,5 +1,7 @@
 package com.haushekmiva.cloudfilestorage.service;
 
+import com.haushekmiva.cloudfilestorage.dto.ObjectInfo;
+
 import java.io.InputStream;
 import java.util.List;
 
@@ -24,4 +26,6 @@ public interface FileStorageService {
     void createEmptyMarker(String key);
 
     void copyObject(String key, String copyKey);
+
+    List<ObjectInfo> searchObjects(String prefix);
 }

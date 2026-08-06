@@ -1,5 +1,6 @@
 package com.haushekmiva.cloudfilestorage.service;
 
+import com.haushekmiva.cloudfilestorage.dto.ObjectInfo;
 import com.haushekmiva.cloudfilestorage.exception.FileStorageException;
 import io.minio.*;
 import io.minio.errors.ErrorResponseException;
@@ -136,7 +137,7 @@ public class FileStorageServiceImpl implements FileStorageService {
             );
             return stat.size();
 
-        }  catch (MinioException e) {
+        } catch (MinioException e) {
             throw new FileStorageException("Unknown file storage error occurred.", e);
         }
     }
@@ -169,6 +170,28 @@ public class FileStorageServiceImpl implements FileStorageService {
                                     .build())
                             .build()
             );
+        } catch (MinioException e) {
+            throw new FileStorageException("Unknown file storage error occurred.", e);
+        }
+    }
+
+    @Override
+    public List<ObjectInfo> searchObjects(String prefix) {
+        try {
+            Iterable<Result<Item>> results = minioClient.listObjects(
+                    ListObjectsArgs.builder()
+                            .bucket(bucket)
+                            .prefix(prefix)
+                            .build()
+            );
+
+            List<ObjectInfo> objects = new ArrayList<>();
+            for (Result<Item> result : results) {
+                Item item = result.get();
+                objects.add(new ObjectInfo(item.objectName(), item.size()));
+            }
+
+            return objects;
         } catch (MinioException e) {
             throw new FileStorageException("Unknown file storage error occurred.", e);
         }
