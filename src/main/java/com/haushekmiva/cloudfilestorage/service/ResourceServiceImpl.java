@@ -83,7 +83,7 @@ public class ResourceServiceImpl implements ResourceService {
         }
 
         try {
-            if (path.endsWith("/")) {
+            if (isDir(path)) {
                 downloadDirectory(userPath, outputStream);
             } else {
                 downloadFile(userPath, outputStream);
@@ -107,7 +107,7 @@ public class ResourceServiceImpl implements ResourceService {
             throw new ResourceNotFoundException(path);
         }
 
-        if (path.endsWith("/")) {
+        if (isDir(path)) {
             fileStorageService.deleteObjects(userPath);
         } else {
             fileStorageService.deleteObject(userPath);
@@ -125,7 +125,7 @@ public class ResourceServiceImpl implements ResourceService {
         PathPartsDto pathParts = splitPath(path);
 
 
-        if (path.endsWith("/")) {
+        if (isDir(path)) {
 
             if (!isDirectoryExists(userPath)) {
                 throw new ResourceNotFoundException(userPath);
@@ -166,7 +166,7 @@ public class ResourceServiceImpl implements ResourceService {
 
             PathPartsDto pathParts = splitPath(removeUserPrefix(resource.path()));
 
-            if (resource.path().endsWith("/")) {
+            if (isDir(resource.path())) {
                 response.add(new ResourceInfoResponse(pathParts.resourcePath(), pathParts.resourceName(), ResourceType.DIRECTORY));
             } else {
                 response.add(new ResourceInfoResponse(pathParts.resourcePath(), pathParts.resourceName(), ResourceType.FILE,
@@ -182,7 +182,7 @@ public class ResourceServiceImpl implements ResourceService {
 
         String userPath = getUserPath(newDirectoryPath, userId);
 
-        if (!newDirectoryPath.endsWith("/") || !isPathValid(newDirectoryPath)) {
+        if (!isDir(newDirectoryPath)|| !isPathValid(newDirectoryPath)) {
             throw new InvalidPathException(newDirectoryPath);
         }
 
@@ -212,7 +212,7 @@ public class ResourceServiceImpl implements ResourceService {
             throw new InvalidPathException(newPath);
         }
 
-        if (oldPath.endsWith("/") != newPath.endsWith("/")) {
+        if (isDir(oldPath) != isDir(newPath)) {
             throw new InvalidPathException(oldPath);
         }
 
@@ -223,7 +223,7 @@ public class ResourceServiceImpl implements ResourceService {
         String userNewPath = getUserPath(newPath, userId);
 
         if (oldPath.equals(newPath)) {
-            if (oldPath.endsWith("/")) {
+            if (isDir(oldPath)) {
                 return new ResourceInfoResponse(oldPathParts.resourcePath(), oldPathParts.resourceName(),
                         ResourceType.DIRECTORY);
             } else {
@@ -237,7 +237,7 @@ public class ResourceServiceImpl implements ResourceService {
             throw new InvalidPathException(newPath);
         }
 
-        if (oldPath.endsWith("/")) {
+        if (isDir(oldPath)) {
 
             if (!isDirectoryExists(userOldPath)) {
                 throw new ResourceNotFoundException(userOldPath);
@@ -298,7 +298,7 @@ public class ResourceServiceImpl implements ResourceService {
                 }
             }
 
-            if (resource.path().endsWith("/")) {
+            if (isDir(resource.path())) {
                 PathPartsDto dirParts = splitPath(relativePath);
                 if (dirParts.resourceName().contains(name) && addedDirectories.add(relativePath)) {
                     searchResults.add(new ResourceInfoResponse(dirParts.resourcePath(), dirParts.resourceName(),
@@ -343,16 +343,14 @@ public class ResourceServiceImpl implements ResourceService {
     }
 
     private PathPartsDto splitPath(String fullPath) {
-        boolean isDirectory = fullPath.endsWith("/");
-        String trimmed = isDirectory ? fullPath.substring(0, fullPath.length() - 1) : fullPath;
-
+        String trimmed = isDir(fullPath) ? fullPath.substring(0, fullPath.length() - 1) : fullPath;
         int lastSlash = trimmed.lastIndexOf('/');
         if (lastSlash == -1) {
             return new PathPartsDto(fullPath, "");
         }
 
         String path = trimmed.substring(0, lastSlash + 1);
-        String name = trimmed.substring(lastSlash + 1) + (isDirectory ? "/" : "");
+        String name = trimmed.substring(lastSlash + 1) + (isDir(fullPath) ? "/" : "");
         return new PathPartsDto(name, path);
     }
 
@@ -363,6 +361,10 @@ public class ResourceServiceImpl implements ResourceService {
 
     private boolean isPathValid(String path) {
         return path.length() < MAX_PATH_LENGTH && path.matches(VALID_PATH_REGEX);
+    }
+
+    private boolean isDir(String path) {
+        return path.endsWith("/");
     }
 
     private boolean isDirectoryExists(String path) {
