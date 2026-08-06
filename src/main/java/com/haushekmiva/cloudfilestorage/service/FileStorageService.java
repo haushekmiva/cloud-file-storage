@@ -19,9 +19,9 @@ public interface FileStorageService {
 
     Long getObjectSize(String key);
 
-    List<String> getDirectoryContent(String prefix);
+    List<ObjectInfo> getDirectoryContent(String prefix);
 
-    List<String> getDirectoryTopLevelContent(String prefix);
+    List<ObjectInfo> getDirectoryTopLevelContent(String prefix);
 
     void createEmptyMarker(String key);
 

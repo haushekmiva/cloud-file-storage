@@ -143,12 +143,12 @@ public class FileStorageServiceImpl implements FileStorageService {
     }
 
     @Override
-    public List<String> getDirectoryContent(String prefix) {
+    public List<ObjectInfo> getDirectoryContent(String prefix) {
         return listObjectsByPrefix(prefix, true);
     }
 
     @Override
-    public List<String> getDirectoryTopLevelContent(String prefix) {
+    public List<ObjectInfo> getDirectoryTopLevelContent(String prefix) {
         return listObjectsByPrefix(prefix, false);
     }
 
@@ -197,7 +197,7 @@ public class FileStorageServiceImpl implements FileStorageService {
         }
     }
 
-    private List<String> listObjectsByPrefix(String prefix, boolean recursive) {
+    private List<ObjectInfo> listObjectsByPrefix(String prefix, boolean recursive) {
         Iterable<Result<Item>> results = minioClient.listObjects(
                 ListObjectsArgs.builder()
                         .bucket(bucket)
@@ -206,17 +206,18 @@ public class FileStorageServiceImpl implements FileStorageService {
                         .build()
         );
 
-        List<String> objectNames = new ArrayList<>();
+        List<ObjectInfo> objects = new ArrayList<>();
 
         try {
             for (Result<Item> result : results) {
                 Item item = result.get();
-                objectNames.add(item.objectName());
+                objects.add(new ObjectInfo(item.objectName(), item.size()));
             }
         } catch (MinioException e) {
-            throw new FileStorageException("Error occurred while getting object names", e);
+            throw new FileStorageException("Error occurred while getting objects.", e);
         }
-        return objectNames;
+        return objects;
     }
+
 
 }
