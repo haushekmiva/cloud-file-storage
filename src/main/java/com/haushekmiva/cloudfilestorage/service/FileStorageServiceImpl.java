@@ -180,6 +180,7 @@ public class FileStorageServiceImpl implements FileStorageService {
         try {
             Iterable<Result<Item>> results = minioClient.listObjects(
                     ListObjectsArgs.builder()
+                            .recursive(true)
                             .bucket(bucket)
                             .prefix(prefix)
                             .build()

@@ -78,14 +78,12 @@ public class ResourceServiceImpl implements ResourceService {
 
         String userPath = getUserPath(path, userId);
 
-        if (!fileStorageService.isExists(userPath)) {
-            throw new ResourceNotFoundException(userPath);
-        }
-
         try {
             if (isDir(path)) {
+                if (!isDirectoryExists(userPath)) throw new ResourceNotFoundException(userPath);
                 downloadDirectory(userPath, outputStream);
             } else {
+                if (!fileStorageService.isExists(userPath)) throw new ResourceNotFoundException(userPath);
                 downloadFile(userPath, outputStream);
             }
             log.info("Resource served: path={}", userPath);
@@ -102,14 +100,11 @@ public class ResourceServiceImpl implements ResourceService {
         }
 
         String userPath = getUserPath(path, userId);
-
-        if (!fileStorageService.isExists(userPath)) {
-            throw new ResourceNotFoundException(path);
-        }
-
         if (isDir(path)) {
+            if (!isDirectoryExists(userPath)) throw new ResourceNotFoundException(userPath);
             fileStorageService.deleteObjects(userPath);
         } else {
+            if (!fileStorageService.isExists(userPath)) throw new ResourceNotFoundException(userPath);
             fileStorageService.deleteObject(userPath);
         }
 
@@ -188,11 +183,12 @@ public class ResourceServiceImpl implements ResourceService {
 
         PathPartsDto pathParts = splitPath(newDirectoryPath);
 
-        if (!isDirectoryExists(getUserPath(pathParts.resourcePath(), userId))) {
+        String parentResourcePath = pathParts.resourcePath();
+        if (!parentResourcePath.isEmpty() && !isDirectoryExists(getUserPath(parentResourcePath, userId))) {
             throw new ResourceNotFoundException(userPath);
         }
 
-        if (isDirectoryExists(newDirectoryPath)) {
+        if (isDirectoryExists(userPath)) {
             throw new ResourceAlreadyExistsException(userPath);
         }
 
@@ -252,8 +248,8 @@ public class ResourceServiceImpl implements ResourceService {
             for (ObjectInfo resource : directoryContent) {
                 String suffix = resource.path().substring(userOldPath.length());
                 fileStorageService.copyObject(resource.path(), userNewPath + suffix);
-                fileStorageService.deleteObject(resource.path());
             }
+                fileStorageService.deleteObjects(userOldPath);
 
             return new ResourceInfoResponse(newPathParts.resourcePath(), newPathParts.resourceName(), ResourceType.DIRECTORY);
 
@@ -327,13 +323,22 @@ public class ResourceServiceImpl implements ResourceService {
         List<ObjectInfo> filesPath = fileStorageService.getDirectoryContent(path);
 
         try (ZipOutputStream zos = new ZipOutputStream(outputStream)) {
-
             for (ObjectInfo resource : filesPath) {
-                zos.putNextEntry(new ZipEntry(resource.path().substring(path.length())));
-                try (InputStream is = fileStorageService.download(resource.path())) {
-                    is.transferTo(zos);
+                String zipEntryPath = resource.path().substring(path.length());
+
+                if (zipEntryPath.isEmpty()) {
+                    continue;
                 }
-                zos.closeEntry();
+                if (isDir(resource.path())) {
+                    zos.putNextEntry(new ZipEntry(zipEntryPath));
+                    zos.closeEntry();
+                } else {
+                    zos.putNextEntry(new ZipEntry(zipEntryPath));
+                    try (InputStream is = fileStorageService.download(resource.path())) {
+                        is.transferTo(zos);
+                    }
+                    zos.closeEntry();
+                }
             }
         }
     }
