@@ -28,7 +28,7 @@ import java.util.zip.ZipOutputStream;
 public class ResourceServiceImpl implements ResourceService {
 
     private static final int MAX_PATH_LENGTH = 1024;
-    private static final String VALID_PATH_REGEX = "^(?!/)(?!.*//)(?!.*(?:^|/)\\.+(?:/|$))\\S+$";
+    private static final String VALID_PATH_REGEX = "^(?!/)(?!.*//)(?!.*(?:^|/)\\.+(?:/|$)).+$";
     private final FileStorageService fileStorageService;
 
 
@@ -146,7 +146,7 @@ public class ResourceServiceImpl implements ResourceService {
     @Override
     public List<ResourceInfoResponse> getDirectoryContentInfo(String path, Long userId) {
 
-        if (!isPathValid(path)) {
+        if (!isPathValid(path) && !path.isEmpty()) {
             throw new InvalidPathException(path);
         }
 
@@ -155,7 +155,7 @@ public class ResourceServiceImpl implements ResourceService {
 
         List<ObjectInfo> directoryContent = fileStorageService.getDirectoryTopLevelContent(userPath);
 
-        if (directoryContent.isEmpty() && !fileStorageService.isExists(userPath)) {
+        if (directoryContent.isEmpty() && !path.isEmpty() && !fileStorageService.isExists(userPath)) {
             throw new ResourceNotFoundException(userPath);
         }
 
@@ -227,9 +227,15 @@ public class ResourceServiceImpl implements ResourceService {
 
         if (oldPath.equals(newPath)) {
             if (isDir(oldPath)) {
+                if (!isDirectoryExists(userOldPath)) {
+                    throw new ResourceNotFoundException(userOldPath);
+                }
                 return new ResourceInfoResponse(oldPathParts.resourcePath(), oldPathParts.resourceName(),
                         ResourceType.DIRECTORY);
             } else {
+                if (!fileStorageService.isExists(userOldPath)) {
+                    throw new ResourceNotFoundException(userOldPath);
+                }
                 return new ResourceInfoResponse(oldPathParts.resourcePath(), oldPathParts.resourceName(),
                         ResourceType.FILE, fileStorageService.getObjectSize(userOldPath));
             }
@@ -256,7 +262,7 @@ public class ResourceServiceImpl implements ResourceService {
                 String suffix = resource.path().substring(userOldPath.length());
                 fileStorageService.copyObject(resource.path(), userNewPath + suffix);
             }
-                fileStorageService.deleteObjects(userOldPath);
+            fileStorageService.deleteObjects(userOldPath);
 
             log.info("Directory moved: from={} to={} userId={}", userOldPath, userNewPath, userId);
             return new ResourceInfoResponse(newPathParts.resourcePath(), newPathParts.resourceName(), ResourceType.DIRECTORY);
