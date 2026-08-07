@@ -86,7 +86,7 @@ public class ResourceServiceImpl implements ResourceService {
                 if (!fileStorageService.isExists(userPath)) throw new ResourceNotFoundException(userPath);
                 downloadFile(userPath, outputStream);
             }
-            log.info("Resource served: path={}", userPath);
+            log.info("Resource served: path={} userId={}", userPath, userId);
         } catch (IOException e) {
             throw new FileStorageException("Error occurred while downloading file %s".formatted(userPath), e);
         }
@@ -103,9 +103,11 @@ public class ResourceServiceImpl implements ResourceService {
         if (isDir(path)) {
             if (!isDirectoryExists(userPath)) throw new ResourceNotFoundException(userPath);
             fileStorageService.deleteObjects(userPath);
+            log.info("Directory deleted: path={} userId={}", userPath, userId);
         } else {
             if (!fileStorageService.isExists(userPath)) throw new ResourceNotFoundException(userPath);
             fileStorageService.deleteObject(userPath);
+            log.info("File deleted: path={} userId={}", userPath, userId);
         }
 
     }
@@ -126,6 +128,7 @@ public class ResourceServiceImpl implements ResourceService {
                 throw new ResourceNotFoundException(userPath);
             }
 
+            log.info("Directory information requested: path={} userId={}", userPath, userId);
             return new ResourceInfoResponse(pathParts.resourcePath(), pathParts.resourceName(), ResourceType.DIRECTORY);
         } else {
 
@@ -133,6 +136,7 @@ public class ResourceServiceImpl implements ResourceService {
                 throw new ResourceNotFoundException(userPath);
             }
 
+            log.info("File information requested: path={} userId={}", userPath, userId);
             return new ResourceInfoResponse(pathParts.resourcePath(),
                     pathParts.resourceName(), ResourceType.FILE, fileStorageService.getObjectSize(userPath));
         }
@@ -169,6 +173,8 @@ public class ResourceServiceImpl implements ResourceService {
             }
 
         }
+
+        log.info("Directory content requested: path={} userId={}", userPath, userId);
         return response;
     }
 
@@ -194,6 +200,7 @@ public class ResourceServiceImpl implements ResourceService {
 
         fileStorageService.createEmptyMarker(userPath);
 
+        log.info("Empty directory created: path={} userId={}", userPath, userId);
         return new ResourceInfoResponse(pathParts.resourcePath(), pathParts.resourceName(), ResourceType.DIRECTORY);
     }
 
@@ -251,6 +258,7 @@ public class ResourceServiceImpl implements ResourceService {
             }
                 fileStorageService.deleteObjects(userOldPath);
 
+            log.info("Directory moved: from={} to={} userId={}", userOldPath, userNewPath, userId);
             return new ResourceInfoResponse(newPathParts.resourcePath(), newPathParts.resourceName(), ResourceType.DIRECTORY);
 
         } else {
@@ -265,13 +273,15 @@ public class ResourceServiceImpl implements ResourceService {
 
             fileStorageService.copyObject(userOldPath, userNewPath);
             fileStorageService.deleteObject(userOldPath);
+
+            log.info("File moved: from={} to={} userId={}", userOldPath, userNewPath, userId);
             return new ResourceInfoResponse(newPathParts.resourcePath(), newPathParts.resourceName(), ResourceType.FILE,
                     fileStorageService.getObjectSize(userNewPath));
         }
     }
 
     @Override
-    public List<ResourceInfoResponse> searchResource(String name, Long userId) {
+    public List<ResourceInfoResponse> searchResource(String query, Long userId) {
         String userPath = getUserPath("", userId);
         List<ObjectInfo> userResources = fileStorageService.searchObjects(userPath);
 
@@ -287,7 +297,7 @@ public class ResourceServiceImpl implements ResourceService {
                 current.append(parts[i]).append("/");
                 String directoryPath = current.toString();
 
-                if (parts[i].contains(name) && addedDirectories.add(directoryPath)) {
+                if (parts[i].contains(query) && addedDirectories.add(directoryPath)) {
                     PathPartsDto dirParts = splitPath(directoryPath);
                     searchResults.add(new ResourceInfoResponse(dirParts.resourcePath(), dirParts.resourceName(),
                             ResourceType.DIRECTORY));
@@ -296,7 +306,7 @@ public class ResourceServiceImpl implements ResourceService {
 
             if (isDir(resource.path())) {
                 PathPartsDto dirParts = splitPath(relativePath);
-                if (dirParts.resourceName().contains(name) && addedDirectories.add(relativePath)) {
+                if (dirParts.resourceName().contains(query) && addedDirectories.add(relativePath)) {
                     searchResults.add(new ResourceInfoResponse(dirParts.resourcePath(), dirParts.resourceName(),
                             ResourceType.DIRECTORY));
                 }
@@ -304,12 +314,14 @@ public class ResourceServiceImpl implements ResourceService {
             }
 
             String fileName = parts[parts.length - 1];
-            if (fileName.contains(name)) {
+            if (fileName.contains(query)) {
                 PathPartsDto fileParts = splitPath(relativePath);
                 searchResults.add(new ResourceInfoResponse(fileParts.resourcePath(), fileParts.resourceName(),
                         ResourceType.FILE, resource.size()));
             }
         }
+
+        log.info("Resource search request: query={} userId={}", query, userId);
         return searchResults;
     }
 
