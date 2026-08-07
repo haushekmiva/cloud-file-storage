@@ -4,6 +4,7 @@ import com.haushekmiva.cloudfilestorage.dto.ErrorResponse;
 import com.haushekmiva.cloudfilestorage.dto.ValidationError;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.ConstraintViolationException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.MessageSource;
@@ -53,6 +54,13 @@ public class GlobalExceptionHandler {
                 .toList();
         String message = messageSource.getMessage("error.validation", null, locale);
         return new ErrorResponse(message, errors);
+    }
+
+    @ExceptionHandler(ConstraintViolationException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ErrorResponse handleConstraintViolationException(ConstraintViolationException e, Locale locale) {
+        String message = messageSource.getMessage("error.missing-query-param", null, locale);
+        return new ErrorResponse(message);
     }
 
     @ExceptionHandler(InvalidPathException.class)
