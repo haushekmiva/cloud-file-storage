@@ -31,7 +31,7 @@ public class ResourceServiceImpl implements ResourceService {
     private static final String VALID_PATH_REGEX = "^(?!/)(?!.*//)(?!.*(?:^|/)\\.+(?:/|$))\\S+$";
     private final FileStorageService fileStorageService;
 
-    // TODO: добавить макс размер файла
+
     @Override
     public List<ResourceInfoResponse> upload(List<MultipartFile> files, String path, Long userId) {
 
