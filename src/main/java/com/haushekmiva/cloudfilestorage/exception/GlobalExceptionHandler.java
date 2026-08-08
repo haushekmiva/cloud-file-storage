@@ -2,17 +2,15 @@ package com.haushekmiva.cloudfilestorage.exception;
 
 import com.haushekmiva.cloudfilestorage.dto.ErrorResponse;
 import com.haushekmiva.cloudfilestorage.dto.ValidationError;
-import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.servlet.http.HttpServletRequest;
-import jakarta.validation.ConstraintViolationException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.MessageSource;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.web.context.SecurityContextRepository;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -56,9 +54,9 @@ public class GlobalExceptionHandler {
         return new ErrorResponse(message, errors);
     }
 
-    @ExceptionHandler(ConstraintViolationException.class)
+    @ExceptionHandler(MissingServletRequestParameterException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public ErrorResponse handleConstraintViolationException(ConstraintViolationException e, Locale locale) {
+    public ErrorResponse handleConstraintViolationException(MissingServletRequestParameterException e, Locale locale) {
         String message = messageSource.getMessage("error.missing-query-param", null, locale);
         return new ErrorResponse(message);
     }

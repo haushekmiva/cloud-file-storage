@@ -4,20 +4,15 @@ import com.haushekmiva.cloudfilestorage.dto.ResourceInfoResponse;
 import com.haushekmiva.cloudfilestorage.dto.ResourceType;
 import com.haushekmiva.cloudfilestorage.security.UserDetailsImpl;
 import com.haushekmiva.cloudfilestorage.service.ResourceService;
-import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.*;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 
@@ -68,5 +63,12 @@ public class FileStorageController {
         response.setStatus(HttpStatus.OK.value());
         response.setHeader(HttpHeaders.CONTENT_DISPOSITION, contentDisposition.toString());
         resourceService.download(path, userDetails.user().getId(), response.getOutputStream());
+    }
+
+    @DeleteMapping
+    public ResponseEntity<Void> deleteResource(@RequestParam String path,
+                                               @AuthenticationPrincipal UserDetailsImpl userDetails) {
+        resourceService.delete(path, userDetails.user().getId());
+        return ResponseEntity.noContent().build();
     }
 }
