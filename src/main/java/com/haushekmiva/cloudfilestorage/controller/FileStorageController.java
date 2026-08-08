@@ -71,4 +71,12 @@ public class FileStorageController {
         resourceService.delete(path, userDetails.user().getId());
         return ResponseEntity.noContent().build();
     }
+
+    @PostMapping
+    public ResponseEntity<ResourceInfoResponse> moveResource(@RequestParam String from,
+                                                             @RequestParam String to,
+                                                             @AuthenticationPrincipal UserDetailsImpl userDetails) {
+        ResourceInfoResponse response = resourceService.moveResource(from, to, userDetails.user().getId());
+        return ResponseEntity.ok().body(response);
+    }
 }
