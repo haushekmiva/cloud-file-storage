@@ -2,9 +2,11 @@ package com.haushekmiva.cloudfilestorage.controller;
 
 import com.haushekmiva.cloudfilestorage.dto.ResourceInfoResponse;
 import com.haushekmiva.cloudfilestorage.dto.ResourceType;
+import com.haushekmiva.cloudfilestorage.dto.SearchRequest;
 import com.haushekmiva.cloudfilestorage.security.UserDetailsImpl;
 import com.haushekmiva.cloudfilestorage.service.ResourceService;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.*;
@@ -17,21 +19,20 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 @RestController
-@RequestMapping("/resource")
 @RequiredArgsConstructor
 @Slf4j
 public class FileStorageController {
 
     private final ResourceService resourceService;
 
-    @GetMapping
+    @GetMapping("/resource")
     public ResponseEntity<ResourceInfoResponse> getResourceInfo(@RequestParam String path,
                                                                 @AuthenticationPrincipal UserDetailsImpl userDetails) {
         ResourceInfoResponse response = resourceService.getResourceInfo(path, userDetails.user().getId());
         return ResponseEntity.ok(response);
     }
 
-    @PostMapping
+    @PostMapping("/resource")
     public ResponseEntity<List<ResourceInfoResponse>> uploadResource(@RequestParam String path,
                                                                      @RequestParam("files") List<MultipartFile> files,
                                                                      @AuthenticationPrincipal UserDetailsImpl userDetails) {
@@ -41,7 +42,7 @@ public class FileStorageController {
     }
 
     // и закрыть все оставшиеся эндпоинты
-    @GetMapping("/download")
+    @GetMapping("/resource/download")
     public void downloadResource(@RequestParam String path,
                                  HttpServletResponse response,
                                  @AuthenticationPrincipal UserDetailsImpl userDetails) throws IOException {
@@ -65,18 +66,25 @@ public class FileStorageController {
         resourceService.download(path, userDetails.user().getId(), response.getOutputStream());
     }
 
-    @DeleteMapping
+    @DeleteMapping("/resource")
     public ResponseEntity<Void> deleteResource(@RequestParam String path,
                                                @AuthenticationPrincipal UserDetailsImpl userDetails) {
         resourceService.delete(path, userDetails.user().getId());
         return ResponseEntity.noContent().build();
     }
 
-    @PostMapping
+    @PostMapping("/resource")
     public ResponseEntity<ResourceInfoResponse> moveResource(@RequestParam String from,
                                                              @RequestParam String to,
                                                              @AuthenticationPrincipal UserDetailsImpl userDetails) {
         ResourceInfoResponse response = resourceService.moveResource(from, to, userDetails.user().getId());
         return ResponseEntity.ok().body(response);
+    }
+
+    @GetMapping("/directory")
+    public ResponseEntity<List<ResourceInfoResponse>> getDirectoryContent(@RequestParam String path,
+                                                                    @AuthenticationPrincipal UserDetailsImpl userDetails) {
+        List<ResourceInfoResponse> responses = resourceService.getDirectoryContentInfo(path, userDetails.user().getId());
+        return ResponseEntity.ok().body(responses);
     }
 }
