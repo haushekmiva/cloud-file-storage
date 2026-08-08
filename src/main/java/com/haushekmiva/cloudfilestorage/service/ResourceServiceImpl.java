@@ -374,7 +374,7 @@ public class ResourceServiceImpl implements ResourceService {
         }
 
         String path = trimmed.substring(0, lastSlash + 1);
-        String name = trimmed.substring(lastSlash + 1) + (isDir(fullPath) ? "/" : "");
+        String name = trimmed.substring(lastSlash + 1);
         return new PathPartsDto(name, path);
     }
 
