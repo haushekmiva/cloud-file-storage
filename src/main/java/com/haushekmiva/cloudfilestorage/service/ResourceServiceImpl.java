@@ -3,10 +3,7 @@ package com.haushekmiva.cloudfilestorage.service;
 import com.haushekmiva.cloudfilestorage.dto.ObjectInfo;
 import com.haushekmiva.cloudfilestorage.dto.ResourceInfoResponse;
 import com.haushekmiva.cloudfilestorage.dto.ResourceType;
-import com.haushekmiva.cloudfilestorage.exception.FileStorageException;
-import com.haushekmiva.cloudfilestorage.exception.InvalidPathException;
-import com.haushekmiva.cloudfilestorage.exception.ResourceAlreadyExistsException;
-import com.haushekmiva.cloudfilestorage.exception.ResourceNotFoundException;
+import com.haushekmiva.cloudfilestorage.exception.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -37,6 +34,10 @@ public class ResourceServiceImpl implements ResourceService {
 
         if (!isPathValid(path) && !path.isEmpty()) {
             throw new InvalidPathException(path);
+        }
+
+        if (files == null || files.isEmpty()) {
+            throw new FilesNotUploadedException("The list of files provided for upload is empty.");
         }
 
         for (MultipartFile file : files) {
