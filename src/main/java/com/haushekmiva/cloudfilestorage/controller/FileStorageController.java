@@ -94,4 +94,12 @@ public class FileStorageController {
         ResourceInfoResponse response = resourceService.createEmptyDirectory(path, userDetails.user().getId());
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
+
+    @GetMapping("/resource/search")
+    public ResponseEntity<List<ResourceInfoResponse>> searchResources(@Valid SearchRequest searchRequest,
+                                                                      @AuthenticationPrincipal UserDetailsImpl userDetails) {
+        List<ResourceInfoResponse> searchResults = resourceService.searchResource(
+                searchRequest.query(), userDetails.user().getId());
+        return ResponseEntity.ok().body(searchResults);
+    }
 }
