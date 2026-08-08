@@ -87,4 +87,11 @@ public class FileStorageController {
         List<ResourceInfoResponse> responses = resourceService.getDirectoryContentInfo(path, userDetails.user().getId());
         return ResponseEntity.ok().body(responses);
     }
+
+    @PostMapping("/directory")
+    public ResponseEntity<ResourceInfoResponse> createEmptyDirectory(@RequestParam String path,
+                                                                     @AuthenticationPrincipal UserDetailsImpl userDetails) {
+        ResourceInfoResponse response = resourceService.createEmptyDirectory(path, userDetails.user().getId());
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
 }
