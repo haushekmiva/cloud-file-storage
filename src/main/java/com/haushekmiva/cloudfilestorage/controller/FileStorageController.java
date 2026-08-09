@@ -73,7 +73,7 @@ public class FileStorageController {
         return ResponseEntity.noContent().build();
     }
 
-    @PostMapping("/resource")
+    @PostMapping("/resource/move")
     public ResponseEntity<ResourceInfoResponse> moveResource(@RequestParam String from,
                                                              @RequestParam String to,
                                                              @AuthenticationPrincipal UserDetailsImpl userDetails) {
