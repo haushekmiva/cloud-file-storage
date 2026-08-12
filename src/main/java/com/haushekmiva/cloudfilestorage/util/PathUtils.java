@@ -34,6 +34,10 @@ public final class PathUtils {
         return path.length() < MAX_PATH_LENGTH && path.matches(VALID_PATH_REGEX);
     }
 
+    public static boolean isPathValidOrEmpty(String path) {
+        return path != null && (path.isEmpty() || isPathValid(path));
+    }
+
     public static boolean isDir(String path) {
         return path.endsWith("/");
     }

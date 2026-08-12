@@ -29,41 +29,35 @@ public class ResourceServiceImpl implements ResourceService {
 
     private final FileStorageService fileStorageService;
 
-
     @Override
     public List<ResourceInfoResponse> upload(List<MultipartFile> files, String path, Long userId) {
 
-        if (!isPathValid(path) && !path.isEmpty()) {
-            throw new InvalidPathException(path);
-        }
+        ensureValidPathOrEmpty(path);
 
         if (files == null || files.isEmpty()) {
             throw new FilesNotUploadedException("The list of files provided for upload is empty.");
         }
 
         for (MultipartFile file : files) {
-            String userPath = getUserPath(path + file.getOriginalFilename(), userId);
+            String filePath = path + file.getOriginalFilename();
+            String userPath = getUserPath(filePath, userId);
 
-            if (!isPathValid(userPath)) {
-                throw new InvalidPathException(userPath);
-            }
-
-            if (fileStorageService.isExists(userPath)) {
-                throw new ResourceAlreadyExistsException(userPath);
-            }
+            ensureValidPath(userPath);
+            ensureFileNotExists(filePath, userId);
         }
 
         List<ResourceInfoResponse> response = new ArrayList<>();
 
         for (MultipartFile file : files) {
-            String userPath = getUserPath(path + file.getOriginalFilename(), userId);
+            String filePath = path + file.getOriginalFilename();
+            String userPath = getUserPath(filePath, userId);
 
             try (InputStream inputStream = file.getInputStream()) {
                 Long size = file.getSize();
                 String contentType = file.getContentType();
                 fileStorageService.upload(inputStream, userPath, size, contentType);
                 log.info("Successful file upload: path={}, userId={}", userPath, userId);
-                PathPartsDto parts = splitPath(path + file.getOriginalFilename());
+                PathPartsDto parts = splitPath(filePath);
                 response.add(new ResourceInfoResponse(parts.resourcePath(), parts.resourceName(), ResourceType.FILE, size));
             } catch (IOException e) {
                 throw new FileStorageException("Error occurred while uploading file (%s).".formatted(userPath), e);
@@ -74,18 +68,16 @@ public class ResourceServiceImpl implements ResourceService {
 
     @Override
     public void download(String path, Long userId, OutputStream outputStream) {
-        if (!isPathValid(path) && !path.isEmpty()) {
-            throw new InvalidPathException(path);
-        }
 
+        ensureValidPathOrEmpty(path);
         String userPath = getUserPath(path, userId);
 
         try {
             if (isDir(path) || path.isEmpty()) {
-                if (!isDirectoryExists(path, userId)) throw new ResourceNotFoundException(userPath);
+                ensureDirectoryExists(path, userId);
                 downloadDirectory(userPath, outputStream);
             } else {
-                if (!fileStorageService.isExists(userPath)) throw new ResourceNotFoundException(userPath);
+                ensureFileExists(path, userId);
                 downloadFile(userPath, outputStream);
             }
             log.info("Resource served: path={} userId={}", userPath, userId);
@@ -98,63 +90,47 @@ public class ResourceServiceImpl implements ResourceService {
     public void delete(String path, Long userId) {
 
         // нельзя удалить корневую директорию
-        if (!isPathValid(path)) {
-            throw new InvalidPathException(path);
-        }
+        ensureValidPath(path);
 
         String userPath = getUserPath(path, userId);
         if (isDir(path)) {
-            if (!isDirectoryExists(path, userId)) throw new ResourceNotFoundException(userPath);
+            ensureDirectoryExists(path, userId);
             fileStorageService.deleteObjects(userPath);
             log.info("Directory deleted: path={} userId={}", userPath, userId);
         } else {
-            if (!fileStorageService.isExists(userPath)) throw new ResourceNotFoundException(userPath);
+            ensureFileExists(path, userId);
             fileStorageService.deleteObject(userPath);
             log.info("File deleted: path={} userId={}", userPath, userId);
         }
 
         restoreDirectoryMarkerIfEmpty(path, userId);
-
     }
 
     @Override
     public ResourceInfoResponse getResourceInfo(String path, Long userId) {
-        if (!isPathValid(path)) {
-            throw new InvalidPathException(path);
-        }
+        ensureValidPath(path);
 
         String userPath = getUserPath(path, userId);
         PathPartsDto pathParts = splitPath(path);
 
-
         if (isDir(path)) {
-
-            if (!isDirectoryExists(path, userId)) {
-                throw new ResourceNotFoundException(userPath);
-            }
+            ensureDirectoryExists(path, userId);
 
             log.info("Directory information requested: path={} userId={}", userPath, userId);
             return new ResourceInfoResponse(pathParts.resourcePath(), pathParts.resourceName(), ResourceType.DIRECTORY);
         } else {
-
-            if (!fileStorageService.isExists(userPath)) {
-                throw new ResourceNotFoundException(userPath);
-            }
+            ensureFileExists(path, userId);
 
             log.info("File information requested: path={} userId={}", userPath, userId);
             return new ResourceInfoResponse(pathParts.resourcePath(),
                     pathParts.resourceName(), ResourceType.FILE, fileStorageService.getObjectSize(userPath));
         }
-
     }
 
     @Override
     public List<ResourceInfoResponse> getDirectoryContentInfo(String path, Long userId) {
 
-        if (!isPathValid(path) && !path.isEmpty()) {
-            throw new InvalidPathException(path);
-        }
-
+        ensureValidPathOrEmpty(path);
 
         String userPath = getUserPath(path, userId);
 
@@ -178,7 +154,6 @@ public class ResourceServiceImpl implements ResourceService {
                 response.add(new ResourceInfoResponse(pathParts.resourcePath(), pathParts.resourceName(), ResourceType.FILE,
                         resource.size()));
             }
-
         }
 
         log.info("Directory content requested: path={} userId={}", userPath, userId);
@@ -188,22 +163,21 @@ public class ResourceServiceImpl implements ResourceService {
     @Override
     public ResourceInfoResponse createEmptyDirectory(String path, Long userId) {
 
-        String userPath = getUserPath(path, userId);
+        ensureValidPath(path);
 
-        if (!isDir(path) || !isPathValid(path)) {
+        if (!isDir(path)) {
             throw new InvalidPathException(path);
         }
 
+        String userPath = getUserPath(path, userId);
         PathPartsDto pathParts = splitPath(path);
 
         String parentResourcePath = pathParts.resourcePath();
-        if (!parentResourcePath.isEmpty() && !isDirectoryExists(parentResourcePath, userId)) {
-            throw new ResourceNotFoundException(userPath);
+        if (!parentResourcePath.isEmpty()) {
+            ensureDirectoryExists(parentResourcePath, userId);
         }
 
-        if (isDirectoryExists(path, userId)) {
-            throw new ResourceAlreadyExistsException(userPath);
-        }
+        ensureDirectoryNotExists(path, userId);
 
         fileStorageService.createEmptyMarker(userPath);
 
@@ -214,13 +188,8 @@ public class ResourceServiceImpl implements ResourceService {
     @Override
     public ResourceInfoResponse moveResource(String oldPath, String newPath, Long userId) {
 
-        if (!isPathValid(oldPath)) {
-            throw new InvalidPathException(oldPath);
-        }
-
-        if (!isPathValid(newPath)) {
-            throw new InvalidPathException(newPath);
-        }
+        ensureValidPath(oldPath);
+        ensureValidPath(newPath);
 
         if (isDir(oldPath) != isDir(newPath)) {
             throw new InvalidPathException(oldPath);
@@ -242,14 +211,8 @@ public class ResourceServiceImpl implements ResourceService {
         }
 
         if (isDir(oldPath)) {
-
-            if (!isDirectoryExists(oldPath, userId)) {
-                throw new ResourceNotFoundException(userOldPath);
-            }
-
-            if (isDirectoryExists(newPath, userId)) {
-                throw new ResourceAlreadyExistsException(userNewPath);
-            }
+            ensureDirectoryExists(oldPath, userId);
+            ensureDirectoryNotExists(newPath, userId);
 
             List<ObjectInfo> directoryContent = fileStorageService.getDirectoryContent(userOldPath);
 
@@ -264,14 +227,8 @@ public class ResourceServiceImpl implements ResourceService {
             return new ResourceInfoResponse(newPathParts.resourcePath(), newPathParts.resourceName(), ResourceType.DIRECTORY);
 
         } else {
-
-            if (!fileStorageService.isExists(userOldPath)) {
-                throw new ResourceNotFoundException(userOldPath);
-            }
-
-            if (fileStorageService.isExists(userNewPath)) {
-                throw new ResourceAlreadyExistsException(userNewPath);
-            }
+            ensureFileExists(oldPath, userId);
+            ensureFileNotExists(newPath, userId);
 
             fileStorageService.copyObject(userOldPath, userNewPath);
             fileStorageService.deleteObject(userOldPath);
@@ -358,15 +315,53 @@ public class ResourceServiceImpl implements ResourceService {
         }
     }
 
-    // при пермещении и удаление если это был едиснтвенный элемент в директории создаем пустой маркер директории
+    private void ensureValidPath(String path) {
+        if (!isPathValid(path)) {
+            throw new InvalidPathException(path);
+        }
+    }
+
+    private void ensureValidPathOrEmpty(String path) {
+        if (!isPathValidOrEmpty(path)) {
+            throw new InvalidPathException(path);
+        }
+    }
+
+    private void ensureDirectoryExists(String path, Long userId) {
+        if (!isDirectoryExists(path, userId)) {
+            throw new ResourceNotFoundException(getUserPath(path, userId));
+        }
+    }
+
+    private void ensureDirectoryNotExists(String path, Long userId) {
+        if (isDirectoryExists(path, userId)) {
+            throw new ResourceAlreadyExistsException(getUserPath(path, userId));
+        }
+    }
+
+    private void ensureFileExists(String path, Long userId) {
+        String userPath = getUserPath(path, userId);
+        if (!fileStorageService.isExists(userPath)) {
+            throw new ResourceNotFoundException(userPath);
+        }
+    }
+
+    private void ensureFileNotExists(String path, Long userId) {
+        String userPath = getUserPath(path, userId);
+        if (fileStorageService.isExists(userPath)) {
+            throw new ResourceAlreadyExistsException(userPath);
+        }
+    }
+
     private void restoreDirectoryMarkerIfEmpty(String path, Long userId) {
         PathPartsDto pathParts = splitPath(path);
-        if (!pathParts.resourcePath().equals("")) {
+        if (!pathParts.resourcePath().isEmpty()) {
             if (!isDirectoryExists(pathParts.resourcePath(), userId)) {
                 fileStorageService.createEmptyMarker(getUserPath(pathParts.resourcePath(), userId));
             }
         }
     }
+
     private boolean isDirectoryExists(String path, Long userId) {
         String userPath = getUserPath(path, userId);
         return fileStorageService.isExists(userPath) || !fileStorageService.getDirectoryTopLevelContent(userPath).isEmpty();
