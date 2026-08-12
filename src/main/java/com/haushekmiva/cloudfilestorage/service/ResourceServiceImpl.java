@@ -168,7 +168,9 @@ public class ResourceServiceImpl implements ResourceService {
             PathPartsDto pathParts = splitPath(removeUserPrefix(resource.path()));
 
             if (isDir(resource.path())) {
-                response.add(new ResourceInfoResponse(pathParts.resourcePath(), pathParts.resourceName(), ResourceType.DIRECTORY));
+                if (!removeUserPrefix(resource.path()).equals(path)) {
+                    response.add(new ResourceInfoResponse(pathParts.resourcePath(), pathParts.resourceName(), ResourceType.DIRECTORY));
+                }
             } else {
                 response.add(new ResourceInfoResponse(pathParts.resourcePath(), pathParts.resourceName(), ResourceType.FILE,
                         resource.size()));

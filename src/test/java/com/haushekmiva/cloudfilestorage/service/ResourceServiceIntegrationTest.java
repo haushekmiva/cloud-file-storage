@@ -264,7 +264,7 @@ public class ResourceServiceIntegrationTest {
 
         assertThat(resourceService.getDirectoryContentInfo("", TEST_USER1_ID))
                 .hasSize(1)
-                .contains(new ResourceInfoResponse("", "documents/", ResourceType.DIRECTORY));
+                .contains(new ResourceInfoResponse("", "documents", ResourceType.DIRECTORY));
 
         List<ResourceInfoResponse> documentsContent = resourceService.getDirectoryContentInfo("documents/", TEST_USER1_ID);
         assertThat(documentsContent).containsExactly(
