@@ -221,27 +221,15 @@ public class ResourceServiceImpl implements ResourceService {
             throw new InvalidPathException(oldPath);
         }
 
+        if (newPath.startsWith(oldPath)) {
+            throw new InvalidPathException(newPath);
+        }
+
         PathPartsDto oldPathParts = splitPath(oldPath);
         PathPartsDto newPathParts = splitPath(newPath);
 
         String userOldPath = getUserPath(oldPath, userId);
         String userNewPath = getUserPath(newPath, userId);
-
-        if (oldPath.equals(newPath)) {
-            if (isDir(oldPath)) {
-                if (!isDirectoryExists(userOldPath)) {
-                    throw new ResourceNotFoundException(userOldPath);
-                }
-                return new ResourceInfoResponse(oldPathParts.resourcePath(), oldPathParts.resourceName(),
-                        ResourceType.DIRECTORY);
-            } else {
-                if (!fileStorageService.isExists(userOldPath)) {
-                    throw new ResourceNotFoundException(userOldPath);
-                }
-                return new ResourceInfoResponse(oldPathParts.resourcePath(), oldPathParts.resourceName(),
-                        ResourceType.FILE, fileStorageService.getObjectSize(userOldPath));
-            }
-        }
 
         if (!oldPathParts.resourcePath().equals(newPathParts.resourcePath()) &&
                 !oldPathParts.resourceName().equals(newPathParts.resourceName())) {
