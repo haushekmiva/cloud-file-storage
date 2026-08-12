@@ -1,6 +1,7 @@
 package com.haushekmiva.cloudfilestorage.service;
 
 import com.haushekmiva.cloudfilestorage.dto.ObjectInfo;
+import com.haushekmiva.cloudfilestorage.dto.PathPartsDto;
 import com.haushekmiva.cloudfilestorage.dto.ResourceInfoResponse;
 import com.haushekmiva.cloudfilestorage.dto.ResourceType;
 import com.haushekmiva.cloudfilestorage.exception.*;
@@ -19,13 +20,13 @@ import java.util.Set;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
+import static com.haushekmiva.cloudfilestorage.util.PathUtils.*;
+
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class ResourceServiceImpl implements ResourceService {
 
-    private static final int MAX_PATH_LENGTH = 1024;
-    private static final String VALID_PATH_REGEX = "^(?!/)(?!.*//)(?!.*(?:^|/)\\.+(?:/|$)).+$";
     private final FileStorageService fileStorageService;
 
 
@@ -366,44 +367,8 @@ public class ResourceServiceImpl implements ResourceService {
             }
         }
     }
-
-    private String getUserPath(String path, Long userId) {
-        return "user-" + userId + "-files/" + path;
-    }
-
-    private PathPartsDto splitPath(String fullPath) {
-        String trimmed = isDir(fullPath) ? fullPath.substring(0, fullPath.length() - 1) : fullPath;
-        int lastSlash = trimmed.lastIndexOf('/');
-        if (lastSlash == -1) {
-            return new PathPartsDto(trimmed, "");
-        }
-
-        String path = trimmed.substring(0, lastSlash + 1);
-        String name = trimmed.substring(lastSlash + 1);
-        return new PathPartsDto(name, path);
-    }
-
-    private String removeUserPrefix(String userPath) {
-        int firstSlash = userPath.indexOf('/');
-        return userPath.substring(firstSlash + 1);
-    }
-
-    private boolean isPathValid(String path) {
-        return path.length() < MAX_PATH_LENGTH && path.matches(VALID_PATH_REGEX);
-    }
-
-    private boolean isDir(String path) {
-        return path.endsWith("/");
-    }
-
     private boolean isDirectoryExists(String path, Long userId) {
         String userPath = getUserPath(path, userId);
         return fileStorageService.isExists(userPath) || !fileStorageService.getDirectoryTopLevelContent(userPath).isEmpty();
-    }
-
-    private record PathPartsDto(
-            String resourceName,
-            String resourcePath
-    ) {
     }
 }
