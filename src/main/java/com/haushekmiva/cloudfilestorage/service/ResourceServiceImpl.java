@@ -188,6 +188,10 @@ public class ResourceServiceImpl implements ResourceService {
     @Override
     public ResourceInfoResponse moveResource(String oldPath, String newPath, Long userId) {
 
+        if (oldPath.equals(newPath)) {
+            return getResourceInfo(oldPath, userId);
+        }
+
         ensureValidPath(oldPath);
         ensureValidPath(newPath);
 
