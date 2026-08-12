@@ -182,7 +182,7 @@ public class ResourceServiceIntegrationTest {
                 new ResourceInfoResponse("your-folder/my-folder/", "report-image.jpeg", ResourceType.FILE, 14L)
         );
         assertThat(resourceService.getDirectoryContentInfo("", TEST_USER1_ID)).containsExactly(
-                new ResourceInfoResponse("", "your-folder/", ResourceType.DIRECTORY)
+                new ResourceInfoResponse("", "your-folder", ResourceType.DIRECTORY)
         );
     }
 
@@ -243,7 +243,7 @@ public class ResourceServiceIntegrationTest {
 
         assertThat(resourceService.getDirectoryContentInfo("", TEST_USER1_ID))
                 .hasSize(1)
-                .contains(new ResourceInfoResponse("", "Новая папка/", ResourceType.DIRECTORY));
+                .contains(new ResourceInfoResponse("", "Новая папка", ResourceType.DIRECTORY));
     }
 
     @Test

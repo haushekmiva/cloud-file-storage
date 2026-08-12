@@ -73,14 +73,14 @@ public class ResourceServiceImpl implements ResourceService {
 
     @Override
     public void download(String path, Long userId, OutputStream outputStream) {
-        if (!isPathValid(path)) {
+        if (!isPathValid(path) && !path.isEmpty()) {
             throw new InvalidPathException(path);
         }
 
         String userPath = getUserPath(path, userId);
 
         try {
-            if (isDir(path)) {
+            if (isDir(path) || path.isEmpty()) {
                 if (!isDirectoryExists(userPath)) throw new ResourceNotFoundException(userPath);
                 downloadDirectory(userPath, outputStream);
             } else {
@@ -96,6 +96,7 @@ public class ResourceServiceImpl implements ResourceService {
     @Override
     public void delete(String path, Long userId) {
 
+        // нельзя удалить корневую директорию
         if (!isPathValid(path)) {
             throw new InvalidPathException(path);
         }
@@ -184,7 +185,7 @@ public class ResourceServiceImpl implements ResourceService {
 
         String userPath = getUserPath(newDirectoryPath, userId);
 
-        if (!isDir(newDirectoryPath)|| !isPathValid(newDirectoryPath)) {
+        if (!isDir(newDirectoryPath) || !isPathValid(newDirectoryPath)) {
             throw new InvalidPathException(newDirectoryPath);
         }
 
@@ -370,7 +371,7 @@ public class ResourceServiceImpl implements ResourceService {
         String trimmed = isDir(fullPath) ? fullPath.substring(0, fullPath.length() - 1) : fullPath;
         int lastSlash = trimmed.lastIndexOf('/');
         if (lastSlash == -1) {
-            return new PathPartsDto(fullPath, "");
+            return new PathPartsDto(trimmed, "");
         }
 
         String path = trimmed.substring(0, lastSlash + 1);
