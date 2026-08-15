@@ -35,7 +35,7 @@ public class FileStorageController {
 
     @PostMapping("/resource")
     public ResponseEntity<List<ResourceInfoResponse>> uploadResource(@RequestParam String path,
-                                                                     @RequestParam("files") List<MultipartFile> files,
+                                                                     @RequestParam("object") List<MultipartFile> files,
                                                                      @AuthenticationPrincipal UserDetailsImpl userDetails) {
 
         List<ResourceInfoResponse> responses = resourceService.upload(files, path, userDetails.user().getId());
