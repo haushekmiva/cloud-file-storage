@@ -42,17 +42,19 @@ public class FileStorageController {
         return ResponseEntity.status(HttpStatus.CREATED).body(responses);
     }
 
-    // и закрыть все оставшиеся эндпоинты
     @GetMapping("/resource/download")
     public void downloadResource(@RequestParam String path,
                                  HttpServletResponse response,
                                  @AuthenticationPrincipal UserDetailsImpl userDetails) throws IOException {
 
-        ResourceInfoResponse resourceInfo = resourceService.getResourceInfo(path, userDetails.user().getId());
+        Long userId =  userDetails.user().getId();
+        ResourceInfoResponse resourceInfo = resourceService.getResourceInfo(path, userId);
 
         String fileName = resourceInfo.name();
         if (resourceInfo.type() == ResourceType.DIRECTORY) {
             fileName += ".zip";
+        } else {
+            response.setContentLengthLong(resourceInfo.size());
         }
 
         ContentDisposition contentDisposition = ContentDisposition
@@ -61,7 +63,6 @@ public class FileStorageController {
                 .build();
 
         response.setContentType(MediaType.APPLICATION_OCTET_STREAM.toString());
-        response.setContentLengthLong(resourceInfo.size());
         response.setStatus(HttpStatus.OK.value());
         response.setHeader(HttpHeaders.CONTENT_DISPOSITION, contentDisposition.toString());
         resourceService.download(path, userDetails.user().getId(), response.getOutputStream());
