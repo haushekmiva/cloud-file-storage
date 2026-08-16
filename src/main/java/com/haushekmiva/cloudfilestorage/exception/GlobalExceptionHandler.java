@@ -5,9 +5,11 @@ import com.haushekmiva.cloudfilestorage.dto.ValidationError;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.MessageSource;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.util.unit.DataSize;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
@@ -25,6 +27,9 @@ import java.util.Locale;
 public class GlobalExceptionHandler {
 
     private final MessageSource messageSource;
+
+    @Value("${spring.servlet.multipart.max-file-size}")
+    private DataSize maxFileSize;
 
     @ExceptionHandler(UserAlreadyExistsException.class)
     @ResponseStatus(HttpStatus.CONFLICT)
@@ -88,8 +93,9 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(MaxUploadSizeExceededException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ErrorResponse handleMaxUploadSizeExceededException(MaxUploadSizeExceededException e, Locale locale) {
-        log.warn("Too big file upload attempt: username = {}", SecurityContextHolder.getContext().getAuthentication().getName());
-        long mb = e.getMaxUploadSize() / (1024 * 1024);
+        log.warn("Too big file upload attempt: username = {}",
+                SecurityContextHolder.getContext().getAuthentication().getName());
+        long mb = maxFileSize.toMegabytes();
         String message = messageSource.getMessage("error.upload.file-too-large", new Object[] {mb}, locale);
         return new ErrorResponse(message);
     }
