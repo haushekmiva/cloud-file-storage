@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
+import org.springframework.web.multipart.support.MissingServletRequestPartException;
 
 import java.util.List;
 import java.util.Locale;
@@ -97,6 +98,13 @@ public class GlobalExceptionHandler {
                 SecurityContextHolder.getContext().getAuthentication().getName());
         long mb = maxFileSize.toMegabytes();
         String message = messageSource.getMessage("error.upload.file-too-large", new Object[] {mb}, locale);
+        return new ErrorResponse(message);
+    }
+
+    @ExceptionHandler(MissingServletRequestPartException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ErrorResponse handleMissingServletRequestPartException(MissingServletRequestPartException e, Locale locale) {
+        String message = messageSource.getMessage("error.missing-file-part", null, locale);
         return new ErrorResponse(message);
     }
 
