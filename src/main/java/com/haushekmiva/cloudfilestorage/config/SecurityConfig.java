@@ -41,7 +41,7 @@ public class SecurityConfig {
                 )
                 .csrf(AbstractHttpConfigurer::disable)
                 .logout(logout -> logout
-                        .logoutUrl("/auth/sign-out")
+                        .logoutUrl("/api/auth/sign-out")
                         .logoutSuccessHandler((request, response, authentication) ->
                                 response.setStatus(HttpServletResponse.SC_OK)));
 
