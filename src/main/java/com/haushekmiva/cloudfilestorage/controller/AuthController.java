@@ -33,8 +33,11 @@ public class AuthController {
     private final AuthService authService;
 
     @PostMapping("/sign-up")
-    public ResponseEntity<AuthResponse> registerUser(@Valid @RequestBody RegisterRequest registerRequest) {
+    public ResponseEntity<AuthResponse> registerUser(@Valid @RequestBody RegisterRequest registerRequest,
+                                                     HttpServletRequest request,
+                                                     HttpServletResponse response) {
         userService.register(registerRequest.username(), registerRequest.password());
+        authenticateAndPersistSession(registerRequest.username(), registerRequest.password(), request, response);
         return ResponseEntity.status(HttpStatus.CREATED).body(new AuthResponse(registerRequest.username()));
     }
 
@@ -43,14 +46,18 @@ public class AuthController {
                                                   HttpServletRequest request,
                                                   HttpServletResponse response) {
 
-        Authentication authentication = authService.authenticateUser(loginRequest.username(), loginRequest.password());
+        authenticateAndPersistSession(loginRequest.username(), loginRequest.password(), request, response);
+        return ResponseEntity.ok(new AuthResponse(loginRequest.username()));
+    }
+
+    private void authenticateAndPersistSession(String username, String password, HttpServletRequest request,
+                                               HttpServletResponse response) {
+        Authentication authentication = authService.authenticateUser(username, password);
 
         SecurityContext context = SecurityContextHolder.createEmptyContext();
         context.setAuthentication(authentication);
         SecurityContextHolder.setContext(context);
         securityContextRepository.saveContext(context, request, response);
-
-        return ResponseEntity.ok(new AuthResponse(loginRequest.username()));
     }
 
 }
