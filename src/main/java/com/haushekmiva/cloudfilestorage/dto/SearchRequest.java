@@ -6,7 +6,7 @@ import jakarta.validation.constraints.Size;
 
 public record SearchRequest(
         @NotBlank(message = "{validation.search-query.not-blank}")
-        @Size(min=3, max=64, message="{validation.search-query.size}")
+        @Size(min=2, max=64, message="{validation.search-query.size}")
         @Pattern(regexp = "^[^/]+$", message = "{validation.search-query.format}")
         String query
 ) {
