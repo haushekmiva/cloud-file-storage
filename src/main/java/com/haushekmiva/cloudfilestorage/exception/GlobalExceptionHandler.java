@@ -8,13 +8,14 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.MessageSource;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.util.unit.DataSize;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
-import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.web.multipart.support.MissingServletRequestPartException;
@@ -33,87 +34,107 @@ public class GlobalExceptionHandler {
     private DataSize maxFileSize;
 
     @ExceptionHandler(UserAlreadyExistsException.class)
-    @ResponseStatus(HttpStatus.CONFLICT)
-    public ErrorResponse handleUserAlreadyExistsException(UserAlreadyExistsException e, Locale locale, HttpServletRequest request) {
+    public ResponseEntity<ErrorResponse> handleUserAlreadyExistsException(UserAlreadyExistsException e, Locale locale, HttpServletRequest request) {
         log.warn("User already exists: username = {}, ip = {}.", e.getUsername(), request.getRemoteAddr());
         String message = messageSource.getMessage("error.user.already-exists", null, locale);
-        return new ErrorResponse(message);
+        return ResponseEntity
+                .status(HttpStatus.CONFLICT)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(new ErrorResponse(message));
     }
 
     @ExceptionHandler(ResourceAlreadyExistsException.class)
-    @ResponseStatus(HttpStatus.CONFLICT)
-    public ErrorResponse handleResourceAlreadyExistsException(ResourceAlreadyExistsException e, Locale locale) {
-        String message = messageSource.getMessage("error.resource.already-exists", null, locale);
+    public ResponseEntity<ErrorResponse> handleResourceAlreadyExistsException(ResourceAlreadyExistsException e, Locale locale) {
         log.debug("Resource already exists: path = {}", e.getPath());
-        return new ErrorResponse(message);
+        String message = messageSource.getMessage("error.resource.already-exists", null, locale);
+        return ResponseEntity
+                .status(HttpStatus.CONFLICT)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(new ErrorResponse(message));
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public ErrorResponse handleValidationException(MethodArgumentNotValidException e, Locale locale) {
+    public ResponseEntity<ErrorResponse> handleValidationException(MethodArgumentNotValidException e, Locale locale) {
         List<ValidationError> errors = e.getBindingResult()
                 .getFieldErrors()
                 .stream()
                 .map(this::processValidationErrors)
                 .toList();
         String message = messageSource.getMessage("error.validation", null, locale);
-        return new ErrorResponse(message, errors);
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(new ErrorResponse(message, errors));
     }
 
     @ExceptionHandler(MissingServletRequestParameterException.class)
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public ErrorResponse handleConstraintViolationException(MissingServletRequestParameterException e, Locale locale) {
+    public ResponseEntity<ErrorResponse> handleConstraintViolationException(MissingServletRequestParameterException e, Locale locale) {
         String message = messageSource.getMessage("error.missing-query-param", null, locale);
-        return new ErrorResponse(message);
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(new ErrorResponse(message));
     }
 
     @ExceptionHandler(InvalidPathException.class)
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public ErrorResponse handleInvalidPathException(InvalidPathException e, Locale locale) {
-        String message = messageSource.getMessage("error.invalid-path", null, locale);
+    public ResponseEntity<ErrorResponse> handleInvalidPathException(InvalidPathException e, Locale locale) {
         log.debug("Invalid path: path = {}", e.getPath());
-        return new ErrorResponse(message);
+        String message = messageSource.getMessage("error.invalid-path", null, locale);
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(new ErrorResponse(message));
     }
 
     @ExceptionHandler(UserAuthenticationException.class)
-    @ResponseStatus(HttpStatus.UNAUTHORIZED)
-    public ErrorResponse handleAuthenticationException(UserAuthenticationException e, Locale locale) {
+    public ResponseEntity<ErrorResponse> handleAuthenticationException(UserAuthenticationException e, Locale locale) {
         log.warn("Authentication error: {}", e.getMessage());
         String message = messageSource.getMessage("error.authentication", null, locale);
-        return new ErrorResponse(message);
+        return ResponseEntity
+                .status(HttpStatus.UNAUTHORIZED)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(new ErrorResponse(message));
     }
 
     @ExceptionHandler(ResourceNotFoundException.class)
-    @ResponseStatus(HttpStatus.NOT_FOUND)
-    public ErrorResponse handleResourceNotFoundException(ResourceNotFoundException e, Locale locale) {
+    public ResponseEntity<ErrorResponse> handleResourceNotFoundException(ResourceNotFoundException e, Locale locale) {
         log.debug("Resource not found: path = {}", e.getPath());
         String message = messageSource.getMessage("error.resource.not-found", null, locale);
-        return new ErrorResponse(message);
+        return ResponseEntity
+                .status(HttpStatus.NOT_FOUND)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(new ErrorResponse(message));
     }
 
     @ExceptionHandler(MaxUploadSizeExceededException.class)
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public ErrorResponse handleMaxUploadSizeExceededException(MaxUploadSizeExceededException e, Locale locale) {
+    public ResponseEntity<ErrorResponse> handleMaxUploadSizeExceededException(MaxUploadSizeExceededException e, Locale locale) {
         log.warn("Too big file upload attempt: username = {}",
                 SecurityContextHolder.getContext().getAuthentication().getName());
         long mb = maxFileSize.toMegabytes();
         String message = messageSource.getMessage("error.upload.file-too-large", new Object[] {mb}, locale);
-        return new ErrorResponse(message);
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(new ErrorResponse(message));
     }
 
     @ExceptionHandler(MissingServletRequestPartException.class)
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public ErrorResponse handleMissingServletRequestPartException(MissingServletRequestPartException e, Locale locale) {
+    public ResponseEntity<ErrorResponse> handleMissingServletRequestPartException(MissingServletRequestPartException e, Locale locale) {
         String message = messageSource.getMessage("error.missing-file-part", null, locale);
-        return new ErrorResponse(message);
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(new ErrorResponse(message));
     }
 
     @ExceptionHandler({FileStorageException.class, Exception.class})
-    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
-    public ErrorResponse handleGeneralException(Exception e, Locale locale) {
+    public ResponseEntity<ErrorResponse> handleGeneralException(Exception e, Locale locale) {
         log.error("Unknown error occurred.", e);
         String message = messageSource.getMessage("error.internal", null, locale);
-        return new ErrorResponse(message);
+        return ResponseEntity
+                .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(new ErrorResponse(message));
     }
 
     private ValidationError processValidationErrors(FieldError fieldError) {
