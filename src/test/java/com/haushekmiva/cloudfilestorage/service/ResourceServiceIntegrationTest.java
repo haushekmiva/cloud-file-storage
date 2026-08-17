@@ -289,7 +289,7 @@ public class ResourceServiceIntegrationTest {
         byte[] content = "A".repeat(size).getBytes(StandardCharsets.UTF_8);
 
         return new MockMultipartFile(
-                "files",
+                "object",
                 name,
                 "text/plain",
                 content
@@ -300,7 +300,7 @@ public class ResourceServiceIntegrationTest {
         byte[] content = new byte[size];
 
         return new MockMultipartFile(
-                "files",
+                "object",
                 name,
                 "image/jpeg",
                 content
