@@ -1,11 +1,13 @@
 package com.haushekmiva.cloudfilestorage.controller;
 
 
-import com.haushekmiva.cloudfilestorage.dto.AuthResponse;
-import com.haushekmiva.cloudfilestorage.dto.LoginRequest;
-import com.haushekmiva.cloudfilestorage.dto.RegisterRequest;
+import com.haushekmiva.cloudfilestorage.dto.*;
 import com.haushekmiva.cloudfilestorage.service.AuthService;
 import com.haushekmiva.cloudfilestorage.service.UserService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -35,6 +37,15 @@ public class AuthController {
     private final AuthService authService;
 
     @PostMapping("/sign-up")
+    @Operation(
+            summary = "Register a new user",
+            description = "Register user account and create session"
+    )
+    @ApiResponse(responseCode = "201", description = "User was registered successfully")
+    @ApiResponse(responseCode = "400", description = "Invalid input data or validation failed",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    @ApiResponse(responseCode = "409", description = "Username already exists",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     public ResponseEntity<AuthResponse> registerUser(@Valid @RequestBody RegisterRequest registerRequest,
                                                      HttpServletRequest request,
                                                      HttpServletResponse response) {
@@ -44,6 +55,15 @@ public class AuthController {
     }
 
     @PostMapping("/sign-in")
+    @Operation(
+            summary = "Authenticate a user",
+            description = "Authenticate the user and create a new session"
+    )
+    @ApiResponse(responseCode = "200", description = "User was authenticated successfully")
+    @ApiResponse(responseCode = "400", description = "Invalid input data or validation failed",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    @ApiResponse(responseCode = "401", description = "Incorrect username or password",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     public ResponseEntity<AuthResponse> loginUser(@Valid @RequestBody LoginRequest loginRequest,
                                                   HttpServletRequest request,
                                                   HttpServletResponse response) {
