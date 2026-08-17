@@ -42,7 +42,7 @@ public class SecurityConfig {
                 .logout(logout -> logout
                         .logoutUrl("/api/auth/sign-out")
                         .logoutSuccessHandler((request, response, authentication) ->
-                                response.setStatus(HttpServletResponse.SC_OK)));
+                                response.setStatus(HttpServletResponse.SC_NO_CONTENT)));
 
         return http.build();
     }
