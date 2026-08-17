@@ -80,7 +80,7 @@ public class FileStorageController {
             summary = "Download resource",
             description = "Downloads a file or a directory by path"
     )
-    @ApiResponse(responseCode = "200", description = "Resource downloaded successfully",
+    @ApiResponse(responseCode = "200", description = "Downloads a file or a directory as ZIP archive by path",
             content = @Content(mediaType = MediaType.APPLICATION_OCTET_STREAM_VALUE))
     @ApiResponse(responseCode = "400", description = "Invalid path",
             content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
@@ -141,7 +141,7 @@ public class FileStorageController {
             content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     @ApiResponse(responseCode = "401", description = "Unauthorized",
             content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
-    @ApiResponse(responseCode = "404", description = "Resource not found",
+    @ApiResponse(responseCode = "404", description = "Source resource not found",
             content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     @ApiResponse(responseCode = "409", description = "Destination path already exists",
             content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
