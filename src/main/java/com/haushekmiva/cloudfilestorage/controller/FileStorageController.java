@@ -5,6 +5,7 @@ import com.haushekmiva.cloudfilestorage.dto.ResourceType;
 import com.haushekmiva.cloudfilestorage.dto.SearchRequest;
 import com.haushekmiva.cloudfilestorage.security.UserDetailsImpl;
 import com.haushekmiva.cloudfilestorage.service.ResourceService;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -19,6 +20,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 @RestController
+@Tag(name = "Resource", description = "File storage resource management")
 @RequiredArgsConstructor
 @RequestMapping("/api")
 @Slf4j

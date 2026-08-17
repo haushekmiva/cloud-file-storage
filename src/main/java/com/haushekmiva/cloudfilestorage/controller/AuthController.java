@@ -6,6 +6,7 @@ import com.haushekmiva.cloudfilestorage.dto.LoginRequest;
 import com.haushekmiva.cloudfilestorage.dto.RegisterRequest;
 import com.haushekmiva.cloudfilestorage.service.AuthService;
 import com.haushekmiva.cloudfilestorage.service.UserService;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
@@ -23,6 +24,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
+@Tag(name = "Authentication", description = "User login and registration")
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
 @Slf4j
