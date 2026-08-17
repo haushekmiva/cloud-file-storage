@@ -9,6 +9,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Optional;
@@ -20,7 +22,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 @Import(TestcontainersConfiguration.class)
 @Transactional
 @RequiredArgsConstructor
-class UserServiceIntegrationTest {
+class  UserServiceIntegrationTest {
 
     private final UserService userService;
     private final UserRepository userRepository;
@@ -28,6 +30,15 @@ class UserServiceIntegrationTest {
 
     private final String testUsername = "userTest";
     private final String testPassword = "password123";
+
+    @DynamicPropertySource
+    static void registerMinioProperties(DynamicPropertyRegistry registry) {
+        registry.add("minio.endpoint", () -> "http://" + TestcontainersConfiguration.minioContainer.getHost()
+                + ":" + TestcontainersConfiguration.minioContainer.getMappedPort(9000));
+        registry.add("minio.access-key", () -> TestcontainersConfiguration.MINIO_ROOT_USER);
+        registry.add("minio.secret-key", () -> TestcontainersConfiguration.MINIO_ROOT_PASSWORD);
+    }
+
 
     @Test
     void register_savesUserInDatabase() {
