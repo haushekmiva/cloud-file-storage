@@ -5,7 +5,7 @@ import com.haushekmiva.cloudfilestorage.dto.PathPartsDto;
 public final class PathUtils {
 
     private static final int MAX_PATH_LENGTH = 1024;
-    private static final String VALID_PATH_REGEX = "^(?!/)(?!.*//)(?!.*(?:^|/)\\.+(?:/|$)).+$";
+    private static final String VALID_PATH_REGEX = "^(?!/)(?!.*//)(?!.*(?:^|/)\\.+(?:/|$))[^\"'\\\\:*?<>|]+$";
 
     private PathUtils() {}
 
