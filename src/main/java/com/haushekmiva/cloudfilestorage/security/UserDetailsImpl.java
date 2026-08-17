@@ -8,23 +8,34 @@ import org.springframework.security.core.userdetails.UserDetails;
 import java.util.Collection;
 import java.util.List;
 
-public record UserDetailsImpl(User user) implements UserDetails {
+public record UserDetailsImpl(
+        Long id,
+        String username,
+        String password
+) implements UserDetails {
+
+    public static UserDetailsImpl fromUser(User user) {
+        return new UserDetailsImpl(
+                user.getId(),
+                user.getUsername(),
+                user.getPasswordHash()
+        );
+    }
 
     @NonNull
     @Override
     public String getUsername() {
-        return user.getUsername();
+        return username;
     }
 
     @NonNull
     @Override
     public String getPassword() {
-        return user.getPasswordHash();
+        return password;
     }
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return List.of();
     }
-
 }

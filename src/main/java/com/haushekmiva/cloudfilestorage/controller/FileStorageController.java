@@ -49,7 +49,7 @@ public class FileStorageController {
             content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     public ResponseEntity<ResourceInfoResponse> getResourceInfo(@RequestParam String path,
                                                                 @AuthenticationPrincipal UserDetailsImpl userDetails) {
-        ResourceInfoResponse response = resourceService.getResourceInfo(path, userDetails.user().getId());
+        ResourceInfoResponse response = resourceService.getResourceInfo(path, userDetails.id());
         return ResponseEntity.ok(response);
     }
 
@@ -71,7 +71,7 @@ public class FileStorageController {
                                                                      @RequestParam("object") List<MultipartFile> files,
                                                                      @AuthenticationPrincipal UserDetailsImpl userDetails) {
 
-        List<ResourceInfoResponse> responses = resourceService.upload(files, path, userDetails.user().getId());
+        List<ResourceInfoResponse> responses = resourceService.upload(files, path, userDetails.id());
         return ResponseEntity.status(HttpStatus.CREATED).body(responses);
     }
 
@@ -92,7 +92,7 @@ public class FileStorageController {
                                  HttpServletResponse response,
                                  @AuthenticationPrincipal UserDetailsImpl userDetails) throws IOException {
 
-        Long userId = userDetails.user().getId();
+        Long userId = userDetails.id();
         ResourceInfoResponse resourceInfo = resourceService.getResourceInfo(path, userId);
 
         String fileName = resourceInfo.name();
@@ -110,7 +110,7 @@ public class FileStorageController {
         response.setContentType(MediaType.APPLICATION_OCTET_STREAM.toString());
         response.setStatus(HttpStatus.OK.value());
         response.setHeader(HttpHeaders.CONTENT_DISPOSITION, contentDisposition.toString());
-        resourceService.download(path, userDetails.user().getId(), response.getOutputStream());
+        resourceService.download(path, userDetails.id(), response.getOutputStream());
     }
 
     @DeleteMapping("/resource")
@@ -127,7 +127,7 @@ public class FileStorageController {
             content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     public ResponseEntity<Void> deleteResource(@RequestParam String path,
                                                @AuthenticationPrincipal UserDetailsImpl userDetails) {
-        resourceService.delete(path, userDetails.user().getId());
+        resourceService.delete(path, userDetails.id());
         return ResponseEntity.noContent().build();
     }
 
@@ -148,7 +148,7 @@ public class FileStorageController {
     public ResponseEntity<ResourceInfoResponse> moveResource(@RequestParam String from,
                                                              @RequestParam String to,
                                                              @AuthenticationPrincipal UserDetailsImpl userDetails) {
-        ResourceInfoResponse response = resourceService.moveResource(from, to, userDetails.user().getId());
+        ResourceInfoResponse response = resourceService.moveResource(from, to, userDetails.id());
         return ResponseEntity.ok().body(response);
     }
 
@@ -166,7 +166,7 @@ public class FileStorageController {
             content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     public ResponseEntity<List<ResourceInfoResponse>> getDirectoryContent(@RequestParam String path,
                                                                           @AuthenticationPrincipal UserDetailsImpl userDetails) {
-        List<ResourceInfoResponse> responses = resourceService.getDirectoryContentInfo(path, userDetails.user().getId());
+        List<ResourceInfoResponse> responses = resourceService.getDirectoryContentInfo(path, userDetails.id());
         return ResponseEntity.ok().body(responses);
     }
 
@@ -184,7 +184,7 @@ public class FileStorageController {
             content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     public ResponseEntity<ResourceInfoResponse> createEmptyDirectory(@RequestParam String path,
                                                                      @AuthenticationPrincipal UserDetailsImpl userDetails) {
-        ResourceInfoResponse response = resourceService.createEmptyDirectory(path, userDetails.user().getId());
+        ResourceInfoResponse response = resourceService.createEmptyDirectory(path, userDetails.id());
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
@@ -201,7 +201,7 @@ public class FileStorageController {
     public ResponseEntity<List<ResourceInfoResponse>> searchResources(@Valid SearchRequest searchRequest,
                                                                       @AuthenticationPrincipal UserDetailsImpl userDetails) {
         List<ResourceInfoResponse> searchResults = resourceService.searchResource(
-                searchRequest.query(), userDetails.user().getId());
+                searchRequest.query(), userDetails.id());
         return ResponseEntity.ok().body(searchResults);
     }
 }
