@@ -29,7 +29,22 @@ services:
     command: redis-server --save 60 1 --loglevel notice --requirepass "${REDIS_PASSWORD}"
     volumes:
       - redis-data:/data
-
+  app:
+    environment:
+      POSTGRES_HOST: postgres
+      MINIO_HOST: minio
+      REDIS_HOST: redis
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    depends_on:
+      - postgres
+      - minio
+      - redis
+    env_file:
+      - .env
 
 volumes:
   postgres_data:
