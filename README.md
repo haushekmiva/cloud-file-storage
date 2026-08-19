@@ -45,12 +45,14 @@
 
 Создать `.env` с параметрами PostgreSQL, Redis и MinIO, например:
 
+```propeties
 POSTGRES_USER=postgres
 POSTGRES_PASSWORD=mysecretpassword
 POSTGRES_DB=mydatabase
 MINIO_ROOT_USER=minioadmin
 MINIO_ROOT_PASSWORD=minioadminpassword
 REDIS_PASSWORD=redispassword
+```
 
 и запустить командой
 ```bash
