@@ -53,7 +53,7 @@ public class ResourceServiceImpl implements ResourceService {
             String userPath = getUserPath(filePath, userId);
 
             try (InputStream inputStream = file.getInputStream()) {
-                Long size = file.getSize();
+                long size = file.getSize();
                 String contentType = file.getContentType();
                 fileStorageService.upload(inputStream, userPath, size, contentType);
                 log.info("Successful file upload: path={}, userId={}", userPath, userId);
@@ -214,15 +214,30 @@ public class ResourceServiceImpl implements ResourceService {
             throw new InvalidPathException(newPath);
         }
 
+
+
         if (isDir(oldPath)) {
+            List<String> copiedResources = new ArrayList<>();
             ensureDirectoryExists(oldPath, userId);
             ensureDirectoryNotExists(newPath, userId);
 
             List<ObjectInfo> directoryContent = fileStorageService.getDirectoryContent(userOldPath);
 
-            for (ObjectInfo resource : directoryContent) {
-                String suffix = resource.path().substring(userOldPath.length());
-                fileStorageService.copyObject(resource.path(), userNewPath + suffix);
+            try {
+                for (ObjectInfo resource : directoryContent) {
+                    String suffix = resource.path().substring(userOldPath.length());
+                    fileStorageService.copyObject(resource.path(), userNewPath + suffix);
+                    copiedResources.add(userNewPath + suffix);
+                }
+            } catch (Exception copyException) {
+                for (String resource : copiedResources) {
+                    try {
+                        fileStorageService.deleteObject(resource);
+                    } catch (Exception deleteException) {
+                        log.error("Can not delete copied file in rollback: path = {}", resource, deleteException);
+                    }
+                }
+                throw copyException;
             }
             fileStorageService.deleteObjects(userOldPath);
 
@@ -235,8 +250,17 @@ public class ResourceServiceImpl implements ResourceService {
             ensureFileNotExists(newPath, userId);
 
             fileStorageService.copyObject(userOldPath, userNewPath);
-            fileStorageService.deleteObject(userOldPath);
 
+            try {
+                fileStorageService.deleteObject(userOldPath);
+            } catch (Exception deleteOldException) {
+                try {
+                    fileStorageService.deleteObject(userNewPath);
+                } catch (Exception rollbackException) {
+                    log.error("Can not delete copied file in rollback: path = {}", userNewPath, rollbackException);
+                }
+                throw deleteOldException;
+            }
             log.info("File moved: from={} to={} userId={}", userOldPath, userNewPath, userId);
             restoreDirectoryMarkerIfEmpty(oldPath, userId);
             return new ResourceInfoResponse(newPathParts.resourcePath(), newPathParts.resourceName(), ResourceType.FILE,
